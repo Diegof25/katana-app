@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katana Barbershop | Filo y Estilo en Concordia</title>
+    <link rel="icon" href="img/katanalogo.jpg" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container nav-container">
+        <div class="logo">
+            <img src="img/katanalogo.jpg" alt="Katana Logo">
+        </div>
+        
+        <button class="menu-toggle" id="mobile-menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <ul class="nav-links">
+            <li><a href="#inicio">Inicio</a></li>
+            <li><a href="#nosotros">Nosotros</a></li>
+            <li><a href="#galeria">Estilos</a></li>
+            <li><a href="#reserva" class="btn-nav">RESERVAR</a></li>
+        </ul>
+    </div>
+</nav>
+
+<header id="inicio" class="hero">
+    <div class="hero-overlay"></div> 
+    <div class="hero-content">
+        <div class="hero-top-badge">
+            <i class="fas fa-map-marker-alt"></i> <span>CONCORDIA, ENTRE RÍOS</span>
+        </div>
+
+        <div class="hero-logo-wrapper">
+            <img src="img/katanalogo.jpg" alt="Katana Logo Principal">
+        </div>
+        
+        <div class="hero-text-card">
+            <span class="since-tag">EST. 2017</span>
+            <h4>FILO • TRADICIÓN • ESTILO</h4>
+            <h1>EL ARTE DEL <br><span class="text-gradient">CORTE PERFECTO</span></h1>
+            <p>Especialistas en Fade, Barba y la identidad del hombre moderno en Concordia.</p>
+            
+            <div class="hero-btns">
+                <a href="#reserva" class="btn-primary">
+                    <i class="fas fa-calendar-check"></i> AGENDAR TURNO
+                </a>
+                <a href="#galeria" class="btn-outline-white">
+                    VER ESTILOS
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<section id="nosotros" class="section">
+    <div class="container">
+        <div class="about-grid">
+            <div class="about-img-container">
+                <div class="img-wrapper">
+                    <img src="img/katanalogo.jpg" alt="Katana Logo" class="main-about-img">
+                    <div class="experience-tag">
+                        <span class="num">9</span>
+                        <span class="text">AÑOS<br>FILO</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="about-text">
+                <span class="subtitle">Legado en Concordia</span>
+                <h2>MAESTROS DEL <span class="text-gradient">DETALLE</span></h2>
+                <p>En <strong>Katana Barbershop</strong>, cada corte es una obra de precisión. Desde 2017, fusionamos la disciplina del arte japonés con las tendencias urbanas más exigentes.</p>
+                
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <i class="fab fa-instagram"></i>
+                        <div class="stat-info">
+                            <strong>+2.1k</strong>
+                            <span>Seguidores</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-certificate"></i>
+                        <div class="stat-info">
+                            <strong>Premium</strong>
+                            <span>Calidad</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="about-cta">
+                    <a href="https://www.instagram.com/katana.barbershop/" target="_blank" class="btn-outline">
+                        <i class="fab fa-instagram"></i> Ver Galería
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+    <section id="galeria" class="section bg-alt">
+        <div class="container">
+            <div class="text-center section-header">
+                <span class="subtitle">Portfolio</span>
+                <h2>NUESTRO TRABAJO</h2>
+                <div class="divider"></div>
+            </div>
+            <div class="carousel-container">
+                <button class="carousel-btn prev" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+                <div class="carousel-track-container">
+                    <ul class="carousel-track">
+                        <li class="carousel-slide"><img src="img/corte1.PNG" alt="Corte 1"></li>
+                        <li class="carousel-slide"><img src="img/Corte2.PNG" alt="Corte 2"></li>
+                        <li class="carousel-slide"><img src="img/corte3.PNG" alt="Corte 3"></li>
+                        <li class="carousel-slide"><img src="img/corte4.PNG" alt="Corte 4"></li>
+                    </ul>
+                </div>
+                <button class="carousel-btn next" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <section id="reserva" class="section">
+        <div class="container">
+            <div class="reserva-wrapper">
+                <div class="reserva-info">
+                    <span class="subtitle">Reserva Online</span>
+                    <h2>AGENDÁ TU <span class="text-gradient">TURNO</span></h2>
+                    <p>Completá los datos y dejá tu reserva cargada de forma simple. Te esperamos en la silla.</p>
+                    
+                    <div class="contact-details">
+                        <div class="info-card">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <div>
+                                <span>Ubicación</span>
+                                <p>Guarumba Miguel Cnel. 910, Concordia</p>
+                            </div>
+                        </div>
+                        <div class="info-card">
+                            <i class="fas fa-clock"></i>
+                            <div>
+                                <span>Horarios</span>
+                                <p>Lun - Sab: 09:00 - 20:00 hs</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reserva-card">
+                    <div class="reserva-header">
+                        <h3>DATOS DEL TURNO</h3>
+                    </div>
+                    <div class="form-body">
+                        <div class="input-group">
+                            <div class="input-box">
+                                <label><i class="fas fa-user"></i> Nombre</label>
+                                <input type="text" id="nombre" placeholder="Tu nombre completo">
+                            </div>
+                            <div class="input-box">
+                                <label><i class="fab fa-whatsapp"></i> Teléfono</label>
+                                <input type="tel" id="telefono" placeholder="345 4xxx-xxx">
+                            </div>
+                        </div>
+
+                        <div class="input-box">
+                            <label><i class="fas fa-cut"></i> Servicio</label>
+                            <select id="select-servicio" class="input-select">
+                                <option value="" disabled selected>Seleccionar servicio</option>
+                                <option value="barba">Arreglo de Barba</option>
+                                <option value="fade">Fade Premium</option>
+                                <option value="completo">Fade Premium o clásico + Barba</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <div class="input-box">
+                                <label><i class="fas fa-calendar-day"></i> Fecha</label>
+                                <input type="text" id="fecha" placeholder="Seleccionar día">
+                            </div>
+                            <div class="input-box">
+                                <label><i class="fas fa-clock"></i> Horario</label>
+                                <select id="select-hora" class="input-select" disabled>
+                                    <option value="">Sin horarios disponibles</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button id="btn-confirmar" class="btn-primary btn-block">
+                            <i class="fas fa-check-circle"></i> CONFIRMAR RESERVA
+                        </button>
+                        <p class="form-note">No hay horarios disponibles para la fecha seleccionada si el selector está bloqueado.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<footer class="main-footer">
+    <div class="container footer-content">
+        <div class="footer-logo">
+            <img src="img/katanalogo.jpg" alt="Katana Logo">
+        </div>
+        
+        <div class="footer-info">
+            <p>&copy; 2026 Katana Barbershop</p>
+            <span>Concordia, Entre Ríos</span>
+        </div>
+
+        <div class="footer-bottom">
+            <a href="login.html" class="admin-link">
+                <i class="fas fa-lock"></i> Acceso Admin
+            </a>
+        </div>
+    </div>
+</footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
