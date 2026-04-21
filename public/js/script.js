@@ -123,8 +123,7 @@ document.getElementById('btn-confirmar').onclick = async () => {
             alert("✅ ¡Turno guardado! Ahora te redirigimos a WhatsApp para confirmar.");
             
             // Abrimos WhatsApp
-            window.location.href = `https://wa.me/${nroBarberia}?text=${mensajeWsp}`;            
-            // RECOMENDACIÓN: No recargues instantáneamente, 
+            window.location.href = `https://wa.me/${nroBarberia}?text=${mensajeWsp}`;             
             // deja que el usuario vea que se abrió la otra pestaña.
             setTimeout(() => { window.location.reload(); }, 1500);
             
