@@ -451,18 +451,18 @@ async function cargarAgenda() {
         turnosFiltrados.forEach(t => {
             const hora = t.fecha_hora.split(' ')[1]; // Extraemos "HH:mm"
             const telLimpio = t.cliente_telefono.replace(/\D/g, '');
-            
+                        
             lista.innerHTML += `
                 <tr>
                     <td><strong>${t.cliente_nombre}</strong><br><span class="status-pill">Activo</span></td>
                     <td>
-                        <a href="https://wa.me/${telLimpio}" target="_blank" class="btn-table-ws" style="background:#25d366; color:white; padding:5px 10px; border-radius:4px; text-decoration:none; display:inline-block;">
+                        <a href="https://wa.me/${telLimpio}" target="_blank" class="btn-table-ws" style="background:#25d366; color:white; padding:8px 15px; border-radius:4px; text-decoration:none; display:flex; align-items:center; gap:8px;">
                             <i class="fab fa-whatsapp"></i> WhatsApp
                         </a>
                     </td>
-                    <td style="font-weight: bold; color: var(--accent);">${hora} hs</td>
-                    <td>
-                        <button class="btn-table-delete" onclick="eliminarTurno(${t.id})">
+                    <td style="font-weight: bold; color: var(--accent); font-size: 1.1rem;">${hora} hs</td>
+                    <td class="action-cell">
+                        <button class="btn-table-delete" onclick="eliminarTurno(${t.id})" style="width:40px; height:40px;">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </td>
