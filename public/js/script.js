@@ -109,7 +109,7 @@ document.getElementById('btn-confirmar').onclick = async () => {
             const fechaLinda = new Date(fecha + "T12:00:00").toLocaleDateString('es-AR', options);
             const diaCapitalizado = fechaLinda.charAt(0).toUpperCase() + fechaLinda.slice(1);
             
-            const nroBarberia = "5493454055943"; 
+            const nroBarberia = "5493454344177"; 
             const mensajeWsp = encodeURIComponent(
                 `*¡TURNO RESERVADO EN KATANA!* ✂️\n\n` +
                 `Hola, soy *${nombre}*.\n` +
