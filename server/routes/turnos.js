@@ -42,7 +42,9 @@ router.get('/horarios-disponibles', async (req, res) => {
 
         // 4. Traer turnos ya tomados y bloqueos parciales
         const turnosOcupados = await pool.query(
-            "SELECT TO_CHAR(fecha_hora, 'HH24:MI') as hora FROM turnos WHERE DATE(fecha_hora) = $1", 
+            `SELECT TO_CHAR(fecha_hora AT TIME ZONE 'UTC' AT TIME ZONE 'America/Argentina/Buenos_Aires', 'HH24:MI') as hora 
+            FROM turnos 
+            WHERE DATE(fecha_hora AT TIME ZONE 'UTC' AT TIME ZONE 'America/Argentina/Buenos_Aires') = $1`, 
             [fecha]
         );
         const bloqueosParciales = await pool.query(
