@@ -77,9 +77,13 @@ document.getElementById('btn-confirmar').onclick = async () => {
     const fecha = document.getElementById('fecha').value;
     const hora = document.getElementById('select-hora').value;
     const selectServicio = document.getElementById('select-servicio');
+    
+    // CORRECCIÓN: Sacamos el ID y el Nombre del servicio correctamente
+    const servicioId = selectServicio.value; 
     const nombreServicio = selectServicio.options[selectServicio.selectedIndex].text;
 
-    if (!servicioSeleccionado) return alert("Por favor, seleccioná un servicio.");
+    // Validaciones
+    if (!servicioId) return alert("Por favor, seleccioná un servicio.");
     if (!nombre || !telefono || !fecha || !hora) return alert("Completá todos los campos.");
 
     const fechaHoraFull = `${fecha} ${hora}`;
@@ -88,7 +92,7 @@ document.getElementById('btn-confirmar').onclick = async () => {
         nombre, 
         telefono, 
         fecha: fechaHoraFull, 
-        servicio_id: servicioSeleccionado 
+        servicio_id: servicioId // Usamos la variable que definimos arriba
     };
 
     try {
@@ -101,32 +105,35 @@ document.getElementById('btn-confirmar').onclick = async () => {
         const result = await res.json();
         
         if (result.success) {
-            // LÓGICA DE WHATSAPP AL FINALIZAR
             const options = { weekday: 'long', day: '2-digit', month: '2-digit' };
             const fechaLinda = new Date(fecha + "T12:00:00").toLocaleDateString('es-AR', options);
             const diaCapitalizado = fechaLinda.charAt(0).toUpperCase() + fechaLinda.slice(1);
+            
             const nroBarberia = "5493454055943"; 
             const mensajeWsp = encodeURIComponent(
                 `*¡TURNO RESERVADO EN KATANA!* ✂️\n\n` +
                 `Hola, soy *${nombre}*.\n` +
                 `Confirmé mi turno desde la web:\n\n` +
                 `💈 *Servicio:* ${nombreServicio}\n` +
-                `📅 *Fecha:* ${diaCapitalizado}\n` + // Usamos la fecha con el nombre del día
+                `📅 *Fecha:* ${diaCapitalizado}\n` + 
                 `⏰ *Hora:* ${hora} hs\n\n` +
                 `¡Nos vemos pronto!`
             );
             
             alert("✅ ¡Turno guardado! Ahora te redirigimos a WhatsApp para confirmar.");
             
-            // Abre WhatsApp y luego recarga la página
+            // Abrimos WhatsApp
             window.open(`https://wa.me/${nroBarberia}?text=${mensajeWsp}`, '_blank');
-            window.location.reload();
+            
+            // RECOMENDACIÓN: No recargues instantáneamente, 
+            // deja que el usuario vea que se abrió la otra pestaña.
+            setTimeout(() => { window.location.reload(); }, 1500);
             
         } else {
             alert("❌ Error: " + result.error);
         }
     } catch (error) {
-        alert("❌ Error de conexión");
+        alert("❌ Error de conexión al servidor");
     }
 };
 
