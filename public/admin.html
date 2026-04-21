@@ -414,33 +414,30 @@ async function verificarSesion() {
     }
 }
 
-        async function cargarAgenda() {
+async function cargarAgenda() {
     try {
         const res = await fetch('/api/admin/turnos');
         const turnos = await res.json();
         const lista = document.getElementById('lista-turnos-admin');
         const contador = document.getElementById('contador');
         const tabla = document.getElementById('contenedor-tabla');
-        const filtroFecha = document.getElementById('filtro-fecha').value; // Formato dd/mm/aaaa
+        const filtroFecha = document.getElementById('filtro-fecha').value; // Formato dd/mm/yyyy
 
         lista.innerHTML = '';
 
-        // 1. Filtrar los turnos por la fecha seleccionada
+        // 1. Filtrar los turnos
+        // t.fecha_hora ahora viene del backend como "DD/MM/YYYY HH:mm"
         const turnosFiltrados = turnos.filter(t => {
-            const fechaTurno = new Date(t.fecha_hora);
-            // Formateamos la fecha del turno a dd/mm/aaaa para comparar con el input
-            const fechaTurnoString = fechaTurno.toLocaleDateString('es-AR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-            return fechaTurnoString === filtroFecha;
+            if (!t.fecha_hora) return false;
+            // Extraemos solo la parte de la fecha "DD/MM/YYYY"
+            const soloFechaTurno = t.fecha_hora.split(' ')[0]; 
+            return soloFechaTurno === filtroFecha;
         });
 
-        // 2. Actualizar contador con la cantidad filtrada
+        // 2. Actualizar contador
         contador.innerText = `${turnosFiltrados.length} TURNOS`;
 
-        // 3. Manejar visualización si no hay turnos en esa fecha
+        // 3. Manejar visualización
         if (turnosFiltrados.length === 0) {
             document.getElementById('mensaje-vacio').style.display = 'block';
             tabla.style.display = 'none';
@@ -450,21 +447,16 @@ async function verificarSesion() {
         document.getElementById('mensaje-vacio').style.display = 'none';
         tabla.style.display = 'table';
 
-        // 4. Ordenar por hora y renderizar
-        turnosFiltrados.sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora)).forEach(t => {
-            const fechaObj = new Date(t.fecha_hora);
-            const hora = fechaObj.toLocaleTimeString('es-AR', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            
+        // 4. Renderizar (Ya vienen ordenados del backend)
+        turnosFiltrados.forEach(t => {
+            const hora = t.fecha_hora.split(' ')[1]; // Extraemos "HH:mm"
             const telLimpio = t.cliente_telefono.replace(/\D/g, '');
             
             lista.innerHTML += `
                 <tr>
                     <td><strong>${t.cliente_nombre}</strong><br><span class="status-pill">Activo</span></td>
                     <td>
-                        <a href="https://wa.me/${telLimpio}" target="_blank" class="btn-ws">
+                        <a href="https://wa.me/${telLimpio}" target="_blank" class="btn-table-ws" style="background:#25d366; color:white; padding:5px 10px; border-radius:4px; text-decoration:none; display:inline-block;">
                             <i class="fab fa-whatsapp"></i> WhatsApp
                         </a>
                     </td>

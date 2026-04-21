@@ -120,14 +120,11 @@ router.post('/reservar', async (req, res) => {
     const { nombre, telefono, servicio_id, fecha } = req.body;
     try {
         await pool.query(
-            // Agregamos el casteo de zona horaria al insertar
-            `INSERT INTO turnos (cliente_nombre, cliente_telefono, servicio_id, fecha_hora) 
-             VALUES ($1, $2, $3, $4::timestamp AT TIME ZONE 'America/Argentina/Buenos_Aires')`,
+            'INSERT INTO turnos (cliente_nombre, cliente_telefono, servicio_id, fecha_hora) VALUES ($1, $2, $3, $4)',
             [nombre, telefono, servicio_id, fecha]
         );
         res.json({ success: true, message: "¡Turno reservado!" });
     } catch (err) {
-        console.error(err);
         res.status(500).json({ success: false, error: "Error al reservar" });
     }
 });
@@ -156,20 +153,13 @@ router.post('/admin/config', async (req, res) => {
 router.get('/admin/turnos', async (req, res) => {
     try {
         const result = await pool.query(`
-            SELECT 
-                turnos.id, 
-                turnos.cliente_nombre, 
-                turnos.cliente_telefono,
-                servicios.nombre as servicio_nombre,
-                -- Convertimos de UTC a la hora de Argentina para mostrar
-                TO_CHAR(turnos.fecha_hora AT TIME ZONE 'UTC' AT TIME ZONE 'America/Argentina/Buenos_Aires', 'DD/MM/YYYY HH24:MI') as fecha_hora
+            SELECT turnos.*, servicios.nombre as servicio_nombre 
             FROM turnos 
             JOIN servicios ON turnos.servicio_id = servicios.id 
-            ORDER BY turnos.fecha_hora ASC
+            ORDER BY fecha_hora ASC
         `);
         res.json(result.rows);
     } catch (err) {
-        console.error(err);
         res.status(500).json({ error: "Error en la base de datos" });
     }
 });
