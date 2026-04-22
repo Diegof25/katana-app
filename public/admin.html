@@ -260,7 +260,7 @@
                         </div>
                         
                         <span id="contador" class="stats-badge">0 TURNOS</span>
-                        <a href="index.html" class="btn-exit"><i class="fas fa-sign-out-alt"></i> SALIR</a>
+                        <a href="#" onclick="cerrarSesion()" class="btn-exit"><i class="fas fa-sign-out-alt"></i> SALIR</a>
                     </div>
             </header>
 
@@ -404,13 +404,12 @@ async function verificarSesion() {
             window.location.href = 'login.html';
             return;
         }
-        // Llamamos a cargarAgenda() solo después de confirmar la sesión
-        // Como ya inicializamos Flatpickr con "today", cargarAgenda() 
-        // filtrará automáticamente los turnos del día actual.
+        // Si llegamos acá, el barbero está logueado
         cargarAgenda();
         cargarBloqueos();
+        cargarConfiguracion(); // Movela acá adentro también
     } catch (error) { 
-        console.error("Error de sesión:", error); 
+        window.location.href = 'login.html';
     }
 }
 
@@ -421,15 +420,13 @@ async function cargarAgenda() {
         const lista = document.getElementById('lista-turnos-admin');
         const contador = document.getElementById('contador');
         const tabla = document.getElementById('contenedor-tabla');
-        const filtroFecha = document.getElementById('filtro-fecha').value; // Formato dd/mm/yyyy
+        const filtroFecha = document.getElementById('filtro-fecha').value; 
 
         lista.innerHTML = '';
 
-        // 1. Filtrar los turnos
-        // t.fecha_hora ahora viene del backend como "DD/MM/YYYY HH:mm"
+        // 1. Filtrar los turnos por la fecha seleccionada
         const turnosFiltrados = turnos.filter(t => {
             if (!t.fecha_hora) return false;
-            // Extraemos solo la parte de la fecha "DD/MM/YYYY"
             const soloFechaTurno = t.fecha_hora.split(' ')[0]; 
             return soloFechaTurno === filtroFecha;
         });
@@ -437,7 +434,7 @@ async function cargarAgenda() {
         // 2. Actualizar contador
         contador.innerText = `${turnosFiltrados.length} TURNOS`;
 
-        // 3. Manejar visualización
+        // 3. Manejar visualización si no hay turnos
         if (turnosFiltrados.length === 0) {
             document.getElementById('mensaje-vacio').style.display = 'block';
             tabla.style.display = 'none';
@@ -447,16 +444,20 @@ async function cargarAgenda() {
         document.getElementById('mensaje-vacio').style.display = 'none';
         tabla.style.display = 'table';
 
-        // 4. Renderizar (Ya vienen ordenados del backend)
+        // 4. Renderizar turnos filtrados
         turnosFiltrados.forEach(t => {
             const hora = t.fecha_hora.split(' ')[1]; // Extraemos "HH:mm"
+            
+            // Lógica de WhatsApp limpia
             const telLimpio = t.cliente_telefono.replace(/\D/g, '');
-                        
+            const prefijo = telLimpio.startsWith('54') ? '' : '54'; 
+            const linkWS = `https://wa.me/${prefijo}${telLimpio}`;
+            
             lista.innerHTML += `
                 <tr>
                     <td><strong>${t.cliente_nombre}</strong><br><span class="status-pill">Activo</span></td>
                     <td>
-                        <a href="https://wa.me/${telLimpio}" target="_blank" class="btn-table-ws" style="background:#25d366; color:white; padding:8px 15px; border-radius:4px; text-decoration:none; display:flex; align-items:center; gap:8px;">
+                        <a href="${linkWS}" target="_blank" class="btn-table-ws" style="background:#25d366; color:white; padding:8px 15px; border-radius:4px; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; width: fit-content;">
                             <i class="fab fa-whatsapp"></i> WhatsApp
                         </a>
                     </td>
@@ -469,6 +470,7 @@ async function cargarAgenda() {
                 </tr>
             `;
         });
+
     } catch (e) { 
         console.error("Error cargando agenda:", e); 
     }
@@ -541,20 +543,39 @@ async function cargarAgenda() {
         }
 
         async function cargarConfiguracion() {
-            const res = await fetch('/api/config');
-            const data = await res.json();
-            if(data) {
-                if(data.mañana_apertura) document.getElementById('m_apertura').value = data.mañana_apertura.slice(0,5);
-                if(data.mañana_cierre) document.getElementById('m_cierre').value = data.mañana_cierre.slice(0,5);
-                if(data.tarde_apertura) document.getElementById('t_apertura').value = data.tarde_apertura.slice(0,5);
-                if(data.tarde_cierre) document.getElementById('t_cierre').value = data.tarde_cierre.slice(0,5);
+    try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        
+        if (data) {
+            // Usamos m_ y t_ para que coincida con tus inputs y evitar la "ñ"
+            if (data.m_apertura) document.getElementById('m_apertura').value = data.m_apertura.slice(0, 5);
+            if (data.m_cierre) document.getElementById('m_cierre').value = data.m_cierre.slice(0, 5);
+            if (data.t_apertura) document.getElementById('t_apertura').value = data.t_apertura.slice(0, 5);
+            if (data.t_cierre) document.getElementById('t_cierre').value = data.t_cierre.slice(0, 5);
+            
+            if (data.intervalo) {
                 document.getElementById('intervalo').value = data.intervalo;
-                if(data.dias_laborales) {
-                    const dias = data.dias_laborales.split(',');
-                    document.querySelectorAll('input[name="dias"]').forEach(cb => cb.checked = dias.includes(cb.value));
-                }
+            }
+
+            if (data.dias_laborales) {
+                const dias = data.dias_laborales.split(',');
+                document.querySelectorAll('input[name="dias"]').forEach(cb => {
+                    cb.checked = dias.includes(cb.value);
+                });
             }
         }
+    } catch (error) {
+        console.error("Error al cargar la configuración:", error);
+    }
+}
+        async function cerrarSesion() {
+    if (!confirm("¿Cerrar sesión de administrador?")) return;
+    
+    // Llamamos a una ruta de logout que deberías tener en tu index.js
+    await fetch('/api/logout', { method: 'POST' });
+    window.location.href = 'login.html';
+}
     </script>
 </body>
 </html>

@@ -161,6 +161,13 @@
                         <h3>DATOS DEL TURNO</h3>
                     </div>
                     <div class="form-body">
+                        <div class="input-box">
+                            <label><i class="fas fa-cut"></i> Elegí tu Barbero</label>
+                            <select id="select-barbero" class="input-select">
+                                <option value="" disabled selected>Cargando barberos...</option>
+                            </select>
+                        </div>
+                        
                         <div class="input-group">
                             <div class="input-box">
                                 <label><i class="fas fa-user"></i> Nombre</label>
@@ -175,10 +182,7 @@
                         <div class="input-box">
                             <label><i class="fas fa-cut"></i> Servicio</label>
                             <select id="select-servicio" class="input-select">
-                                <option value="" disabled selected>Seleccionar servicio</option>
-                                <option value="barba">Arreglo de Barba</option>
-                                <option value="fade">Fade Premium</option>
-                                <option value="completo">Fade Premium o clásico + Barba</option>
+                                <option value="" disabled selected>Cargando servicios...</option>
                             </select>
                         </div>
 

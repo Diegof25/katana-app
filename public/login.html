@@ -25,24 +25,35 @@
 </div>
 
 <script>
-    async function intentarLogin() {
-        const username = document.getElementById('user').value;
-        const password = document.getElementById('pass').value;
+async function intentarLogin() {
+    const username = document.getElementById('user').value;
+    const password = document.getElementById('pass').value;
+    const errorMsg = document.getElementById('error');
 
+    try {
         const res = await fetch('/api/login', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ username, password }) // Mandamos los dos datos
+            body: JSON.stringify({ username, password })
         });
 
         if (res.ok) {
             window.location.href = 'admin.html';
         } else {
             const data = await res.json();
-            document.getElementById('error').innerText = data.message || "Error al entrar";
-            document.getElementById('error').style.display = 'block';
+            errorMsg.innerText = data.message || "Usuario o clave incorrectos";
+            errorMsg.style.display = 'block';
         }
+    } catch (err) {
+        errorMsg.innerText = "Error de conexión con el servidor";
+        errorMsg.style.display = 'block';
     }
+}
+[document.getElementById('user'), document.getElementById('pass')].forEach(input => {
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') intentarLogin();
+    });
+});
 </script>
 </body>
 </html>

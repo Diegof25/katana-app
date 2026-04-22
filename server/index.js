@@ -13,12 +13,14 @@ app.use(express.json());
 
 // 1. CONFIGURACIÓN DE SESIONES (Debe ir antes de las rutas)
 app.use(session({
-    secret: 'katana-secret-key-2026', // Frase secreta para encriptar
+    secret: 'katana-secret-key-2026',
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        maxAge: 3600000, // La sesión dura 1 hora
-        secure: false    // En localhost debe ser false
+        maxAge: 3600000,
+        // CORRECCIÓN: true si estás en internet (HTTPS), false si estás en tu PC
+        secure: process.env.NODE_ENV === 'production', 
+        sameSite: 'lax'
     }
 }));
 
@@ -34,17 +36,17 @@ const authRequired = (req, res, next) => {
 // 3. Ruta de Login mejorada con Base de Datos
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body; 
-    
     try {
-        // Buscamos usando el nombre real de tu columna: password_hash
         const result = await pool.query(
-            'SELECT * FROM usuarios WHERE username = $1 AND password_hash = $2',
+            'SELECT id, username, barbero_id FROM usuarios WHERE username = $1 AND password_hash = $2',
             [username, password]
         );
 
         if (result.rows.length > 0) {
+            const user = result.rows[0];
             req.session.admin = true;
-            res.json({ success: true });
+            req.session.barberoId = user.barbero_id; // Guardamos el ID del barbero en la sesión
+            res.json({ success: true, barberoId: user.barbero_id });
         } else {
             res.status(401).json({ success: false, message: 'Usuario o clave incorrectos' });
         }
@@ -103,18 +105,18 @@ app.use('/api', turnosRoutes);
 // Ruta para guardar bloqueos
 app.post('/api/admin/bloqueos', authRequired, async (req, res) => {
     const { fecha, tipo, inicio, fin } = req.body;
+    const barberoId = req.session.barberoId; // <--- Obtenemos quién está bloqueando
     try {
         const hora_inicio = (tipo === 'parcial') ? inicio : null;
         const hora_fin = (tipo === 'parcial') ? fin : null;
 
         await pool.query(
-            'INSERT INTO bloqueos (fecha, tipo, hora_inicio, hora_fin) VALUES ($1, $2, $3, $4)',
-            [fecha, tipo, hora_inicio, hora_fin]
+            'INSERT INTO bloqueos (fecha, tipo, hora_inicio, hora_fin, barbero_id) VALUES ($1, $2, $3, $4, $5)',
+            [fecha, tipo, hora_inicio, hora_fin, barberoId]
         );
         res.json({ success: true });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Error al bloquear horario" });
+        res.status(500).json({ error: "Error al bloquear" });
     }
 });
 

@@ -1,4 +1,34 @@
 let servicioSeleccionado = null;
+let barberoSeleccionado = null;
+
+// 1. Cargar Barberos (Nueva función)
+async function cargarBarberos() {
+    try {
+        const res = await fetch('/api/barberos');
+        const barberos = await res.json();
+        const selectBarbero = document.getElementById('select-barbero');
+        
+        selectBarbero.innerHTML = '<option value="" disabled selected>Seleccioná al barbero...</option>';
+        
+        barberos.forEach(b => {
+            const option = document.createElement('option');
+            option.value = b.id;
+            option.dataset.whatsapp = b.telefono; // Guardamos su cel aquí
+            option.textContent = b.nombre;
+            selectBarbero.appendChild(option);
+        });
+
+        selectBarbero.addEventListener('change', (e) => {
+            barberoSeleccionado = e.target.value;
+            // Si cambia el barbero, reseteamos fecha y hora para evitar errores
+            document.getElementById('fecha').value = '';
+            document.getElementById('select-hora').innerHTML = '<option value="">Seleccioná un día primero</option>';
+            document.getElementById('select-hora').disabled = true;
+        });
+    } catch (error) {
+        console.error("Error al cargar barberos:", error);
+    }
+}
 
 // 1. Cargar servicios en el Menú Desplegable
 async function cargarServicios() {
@@ -42,18 +72,25 @@ flatpickr("#fecha", {
 });
 // 3. Cargar horarios dinámicos
 async function cargarHorariosDisponibles(fechaElegida) {
+    if (!barberoSeleccionado) {
+        alert("Por favor, seleccioná un barbero primero.");
+        document.getElementById('fecha').value = '';
+        return;
+    }
+
     const selectHora = document.getElementById('select-hora');
     selectHora.disabled = true;
-    selectHora.innerHTML = '<option>Cargando horarios...</option>';
+    selectHora.innerHTML = '<option>Cargando...</option>';
 
     try {
-        const res = await fetch(`/api/horarios-disponibles?fecha=${fechaElegida}`);
+        // Ahora enviamos fecha Y barbero_id al servidor
+        const res = await fetch(`/api/horarios-disponibles?fecha=${fechaElegida}&barbero_id=${barberoSeleccionado}`);
         const data = await res.json(); 
 
         selectHora.innerHTML = '<option value="">-- Seleccioná la hora --</option>';
         
         if (!data.horarios || data.horarios.length === 0) {
-            selectHora.innerHTML = '<option value="">Sin turnos para este día</option>';
+            selectHora.innerHTML = '<option value="">Sin turnos con este barbero</option>';
             return;
         }
 
@@ -66,7 +103,7 @@ async function cargarHorariosDisponibles(fechaElegida) {
 
         selectHora.disabled = false;
     } catch (error) {
-        selectHora.innerHTML = '<option value="">Error al cargar horarios</option>';
+        selectHora.innerHTML = '<option value="">Error al cargar</option>';
     }
 }
 
@@ -76,15 +113,22 @@ document.getElementById('btn-confirmar').onclick = async () => {
     const telefono = document.getElementById('telefono').value;
     const fecha = document.getElementById('fecha').value;
     const hora = document.getElementById('select-hora').value;
-    const selectServicio = document.getElementById('select-servicio');
     
-    // CORRECCIÓN: Sacamos el ID y el Nombre del servicio correctamente
+    const selectServicio = document.getElementById('select-servicio');
+    const selectBarbero = document.getElementById('select-barbero'); // <--- El nuevo selector
+    
+    // Validaciones de selección
+    if (!selectBarbero || !selectBarbero.value) return alert("Por favor, seleccioná un barbero.");
+    if (!selectServicio.value) return alert("Por favor, seleccioná un servicio.");
+    if (!nombre || !telefono || !fecha || !hora) return alert("Completá todos los campos.");
+
     const servicioId = selectServicio.value; 
     const nombreServicio = selectServicio.options[selectServicio.selectedIndex].text;
-
-    // Validaciones
-    if (!servicioId) return alert("Por favor, seleccioná un servicio.");
-    if (!nombre || !telefono || !fecha || !hora) return alert("Completá todos los campos.");
+    
+    // Datos del barbero seleccionado
+    const barberoId = selectBarbero.value;
+    const nombreBarbero = selectBarbero.options[selectBarbero.selectedIndex].text;
+    const nroBarbero = selectBarbero.options[selectBarbero.selectedIndex].dataset.whatsapp; // El nro viene de la DB
 
     const fechaHoraFull = `${fecha} ${hora}`;
 
@@ -92,7 +136,8 @@ document.getElementById('btn-confirmar').onclick = async () => {
         nombre, 
         telefono, 
         fecha: fechaHoraFull, 
-        servicio_id: servicioId // Usamos la variable que definimos arriba
+        servicio_id: servicioId,
+        barbero_id: barberoId // <--- Enviamos el ID a la DB
     };
 
     try {
@@ -109,9 +154,9 @@ document.getElementById('btn-confirmar').onclick = async () => {
             const fechaLinda = new Date(fecha + "T12:00:00").toLocaleDateString('es-AR', options);
             const diaCapitalizado = fechaLinda.charAt(0).toUpperCase() + fechaLinda.slice(1);
             
-            const nroBarberia = "5493454344177"; 
+            // Armamos el mensaje para el barbero específico
             const mensajeWsp = encodeURIComponent(
-                `*¡TURNO RESERVADO EN KATANA!* ✂️\n\n` +
+                `*¡TURNO RESERVADO CON ${nombreBarbero.toUpperCase()}!* ✂️\n\n` +
                 `Hola, soy *${nombre}*.\n` +
                 `Confirmé mi turno desde la web:\n\n` +
                 `💈 *Servicio:* ${nombreServicio}\n` +
@@ -120,11 +165,11 @@ document.getElementById('btn-confirmar').onclick = async () => {
                 `¡Nos vemos pronto!`
             );
             
-            alert("✅ ¡Turno guardado! Ahora te redirigimos a WhatsApp para confirmar.");
+            alert(`✅ ¡Turno guardado con ${nombreBarbero}! Ahora te redirigimos a su WhatsApp.`);
             
-            // Abrimos WhatsApp
-            window.location.href = `https://wa.me/${nroBarberia}?text=${mensajeWsp}`;             
-            // deja que el usuario vea que se abrió la otra pestaña.
+            // Redirección al WhatsApp del barbero elegido
+            window.location.href = `https://wa.me/${nroBarbero}?text=${mensajeWsp}`;             
+            
             setTimeout(() => { window.location.reload(); }, 1500);
             
         } else {
@@ -138,7 +183,7 @@ document.getElementById('btn-confirmar').onclick = async () => {
 // 5. Menu Toggle y carga inicial
 document.addEventListener('DOMContentLoaded', () => {
     cargarServicios();
-    
+    cargarBarberos();
     const menuBtn = document.querySelector('.menu-toggle');
     if(menuBtn) {
         menuBtn.addEventListener('click', () => {
