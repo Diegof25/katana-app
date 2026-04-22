@@ -61,7 +61,14 @@ async function cargarServicios() {
         servicios.forEach(s => {
             const option = document.createElement('option');
             option.value = s.id;
-            option.textContent = `${s.nombre} - $${s.precio}`;
+
+            // Formateamos el precio para que tenga puntos de miles y comas decimales
+            const precioFormateado = Number(s.precio).toLocaleString('es-AR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+            option.textContent = `${s.nombre} - $${precioFormateado}`;
             selectServicio.appendChild(option);
         });
 
