@@ -254,3 +254,25 @@ window.addEventListener('scroll', function() {
         window.scrollY > 50 ? nav.classList.add('scrolled') : nav.classList.remove('scrolled');
     }
 });
+
+
+function mostrarGaleria(nombreBarbero) {
+    // 1. Ocultar todas las galerías (les ponemos la clase que tiene display: none)
+    document.querySelectorAll('.galeria-barbero').forEach(gal => {
+        gal.classList.add('galeria-oculta');
+    });
+
+    // 2. Mostrar solo la del barbero seleccionado
+    const galeriaSeleccionada = document.getElementById(`galeria-${nombreBarbero}`);
+    if (galeriaSeleccionada) {
+        galeriaSeleccionada.classList.remove('galeria-oculta');
+    }
+
+    // 3. Cambiar el estilo del botón activo para que sepa cuál está seleccionado
+    document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
+    
+    // El 'event' es automático cuando hacés clic
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+    }
+}
