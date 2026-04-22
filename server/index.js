@@ -99,9 +99,13 @@ app.post('/api/admin/config', authRequired, async (req, res) => {
 });
 // Ruta para obtener configuración (Pública para que cargue el Admin y el Index)
 app.get('/api/config', async (req, res) => {
+    const { barbero_id } = req.query; // <--- Importante: lo saca de la URL (?barbero_id=X)
     try {
-        const result = await pool.query('SELECT * FROM configuracion WHERE id = 1');
-        res.json(result.rows[0]);
+        const result = await pool.query(
+            'SELECT * FROM configuracion WHERE barbero_id = $1', 
+            [barbero_id]
+        );
+        res.json(result.rows[0] || {}); // Si no hay nada, manda un objeto vacío
     } catch (err) {
         res.status(500).json({ error: "Error al obtener config" });
     }
