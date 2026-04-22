@@ -8,19 +8,25 @@ require('dotenv').config();
 const app = express();
 
 // Configuración básica
-app.use(cors());
 app.use(express.json());
 
-// 1. CONFIGURACIÓN DE SESIONES (Debe ir antes de las rutas)
+// 1. Configuración de CORS para permitir credenciales (Cookies)
+app.use(cors({
+    origin: true, // Permite que el origen del frontend conecte
+    credentials: true // Crucial: permite que las cookies viajen
+}));
+
+app.use(express.json());
+
+// 2. Ajuste en la configuración de SESIONES
 app.use(session({
-    secret: 'katana-secret-key-2026',
-    resave: true, // Forzamos a que se guarde la sesión en cada petición
+    secret: process.env.SESSION_SECRET || 'secreto-muy-seguro',
+    resave: false, 
     saveUninitialized: false, 
-    rolling: true, // Esto refresca el tiempo de expiración de la cookie con cada clic
     cookie: { 
-        maxAge: 1000 * 60 * 60 * 24, // 1 día de duración
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
+        maxAge: 1000 * 60 * 60 * 24,
+        secure: false, // Ponelo en false mientras estés en desarrollo (localhost)
+        sameSite: 'lax' 
     }
 }));
 
@@ -98,14 +104,24 @@ app.get('/api/config', async (req, res) => {
     }
 });
 
-// 4. RUTAS DE LA API
+// --- 4. RUTAS DE LA API ---
 const turnosRoutes = require('./routes/turnos');
 
-// Importante: Definimos primero la ruta protegida de administración
-app.use('/api/admin', authRequired, turnosRoutes);
+/**
+ * IMPORTANTE: 
+ * Al usar app.use('/api', turnosRoutes), las rutas dentro de turnos.js 
+ * que ya dicen '/admin/...' quedarán como '/api/admin/...'.
+ * * La protección 'authRequired' la aplicamos directamente aquí 
+ * mediante una lógica de validación o dentro del mismo turnos.js.
+ */
 
-// Ruta pública para que los clientes puedan ver servicios y reservar
-app.use('/api', turnosRoutes);
+// Aplicamos el middleware de seguridad solo a las rutas que contienen "admin"
+app.use('/api', (req, res, next) => {
+    if (req.path.includes('/admin')) {
+        return authRequired(req, res, next);
+    }
+    next();
+}, turnosRoutes);
 
 // ---------------------------------------------------------
 // GESTIÓN DE BLOQUEOS (Guardar, Listar y Eliminar)
