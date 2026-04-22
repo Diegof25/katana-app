@@ -389,36 +389,36 @@
     });
 
     async function verificarSesion() {
-    try {
-        // 1. Un pequeño delay para que el navegador asiente la cookie
-        await new Promise(r => setTimeout(r, 200));
+        try {
+            // 1. Un pequeño delay para que el navegador asiente la cookie
+            await new Promise(r => setTimeout(r, 200));
 
-        // 2. IMPORTANTE: Definir las opciones aquí mismo para no fallar
-        const opciones = { 
-            method: 'GET',
-            credentials: 'include' // <--- ESTO ES LO QUE TE DA EL ACCESO
-        };
+            // 2. IMPORTANTE: Definir las opciones aquí mismo para no fallar
+            const opciones = { 
+                method: 'GET',
+                credentials: 'include' // <--- ESTO ES LO QUE TE DA EL ACCESO
+            };
 
-        const res = await fetch('/api/admin/turnos', opciones);
+            const res = await fetch('/api/admin/turnos', opciones);
 
-        // Si el servidor responde 401, al login
-        if (res.status === 401) {
-            console.warn("Sesión no válida o expirada.");
-            window.location.href = 'login.html';
-            return;
+            // Si el servidor responde 401, al login
+            if (res.status === 401) {
+                console.warn("Sesión no válida o expirada.");
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // 3. Si el status es 200 (OK), cargamos todo
+            console.log("Sesión verificada con éxito.");
+            inicializarCalendario();
+            cargarBloqueos();
+            cargarConfiguracion();
+
+        } catch (error) {
+            console.error("Error de conexión con el servidor:", error);
         }
-
-        // 3. Si el status es 200 (OK), cargamos todo
-        console.log("Sesión verificada con éxito.");
-        inicializarCalendario();
-        cargarBloqueos();
-        cargarConfiguracion();
-
-    } catch (error) {
-        console.error("Error de conexión con el servidor:", error);
-        // Si hay error de red, no redirijas al toque para poder ver el error en consola
     }
-}
+
     function inicializarCalendario() {
         if (document.getElementById('filtro-fecha')) {
             flatpickr("#filtro-fecha", {
@@ -448,6 +448,7 @@
 
             const turnosFiltrados = turnos.filter(t => {
                 if (!t.fecha_hora) return false;
+                // Ajuste para asegurar que el formato de fecha coincida al filtrar
                 const soloFechaTurno = t.fecha_hora.split(' ')[0]; 
                 return soloFechaTurno === filtroFecha;
             });
@@ -564,14 +565,15 @@
 
     async function cargarConfiguracion() {
         try {
-            const res = await fetch('/api/config'); // Esta ruta suele ser pública
+            const res = await fetch('/api/config'); 
             const data = await res.json();
             
             if (data) {
-                if (data.m_apertura) document.getElementById('m_apertura').value = data.m_apertura.slice(0, 5);
-                if (data.m_cierre) document.getElementById('m_cierre').value = data.m_cierre.slice(0, 5);
-                if (data.t_apertura) document.getElementById('t_apertura').value = data.t_apertura.slice(0, 5);
-                if (data.t_cierre) document.getElementById('t_cierre').value = data.t_cierre.slice(0, 5);
+                // CORRECCIÓN: Nombres de campos ajustados a las columnas de la base de datos
+                if (data.mañana_apertura) document.getElementById('m_apertura').value = data.mañana_apertura.slice(0, 5);
+                if (data.mañana_cierre) document.getElementById('m_cierre').value = data.mañana_cierre.slice(0, 5);
+                if (data.tarde_apertura) document.getElementById('t_apertura').value = data.tarde_apertura.slice(0, 5);
+                if (data.tarde_cierre) document.getElementById('t_cierre').value = data.tarde_cierre.slice(0, 5);
                 if (data.intervalo) document.getElementById('intervalo').value = data.intervalo;
 
                 if (data.dias_laborales) {
