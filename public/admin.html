@@ -380,229 +380,211 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-    // 1. Inicializamos el calendario primero
-    flatpickr("#filtro-fecha", {
-        locale: "es",
-        dateFormat: "d/m/Y",
-        defaultDate: "today", // Para que al entrar ya muestre lo de hoy
-        onChange: function(selectedDates, dateStr) {
-            // Cada vez que el usuario cambie la fecha, se ejecuta esto:
-            cargarAgenda(); 
-        }
+<script>
+    // Configuración para que todos los pedidos incluyan la cookie de sesión
+    const fetchOptions = { credentials: 'include' };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        verificarSesion();
     });
 
-    // 2. Corremos el resto de las funciones
-    verificarSesion();
-    cargarConfiguracion(); 
-});
+    async function verificarSesion() {
+        try {
+            // 1. Pequeño respiro para asegurar que la cookie esté lista
+            await new Promise(r => setTimeout(r, 100));
 
-async function verificarSesion() {
-    try {
-        // 1. Le damos un mini respiro al navegador para procesar la cookie del login
-        await new Promise(r => setTimeout(r, 150));
+            // 2. Intentamos cargar turnos (si falla es porque no somos admin)
+            const res = await fetch('/api/admin/turnos', fetchOptions);
 
-        // 2. Agregamos credentials: 'include' para obligar el envío de la cookie
-        const res = await fetch('/api/admin/turnos', { 
-            credentials: 'include' 
-        });
+            if (res.status === 401) {
+                console.warn("No autorizado. Redirigiendo...");
+                window.location.href = 'login.html';
+                return;
+            }
 
-        if (res.status === 401) {
-            console.warn("No autorizado: Redirigiendo al login...");
+            // 3. Si es válido, inicializamos el resto
+            inicializarCalendario();
+            cargarBloqueos();
+            cargarConfiguracion();
+
+        } catch (error) {
+            console.error("Error en la verificación:", error);
             window.location.href = 'login.html';
-            return;
         }
+    }
 
-        // 3. Si llegamos acá, la sesión es válida. 
-        // Primero inicializamos el calendario y luego cargamos los datos.
-        inicializarCalendario(); 
+    function inicializarCalendario() {
+        if (document.getElementById('filtro-fecha')) {
+            flatpickr("#filtro-fecha", {
+                locale: "es",
+                dateFormat: "d/m/Y",
+                defaultDate: "today",
+                onChange: function() {
+                    cargarAgenda();
+                },
+                onReady: function() {
+                    cargarAgenda(); // Carga la lista apenas está listo
+                }
+            });
+        }
+    }
+
+    async function cargarAgenda() {
+        try {
+            const res = await fetch('/api/admin/turnos', fetchOptions);
+            const turnos = await res.json();
+            const lista = document.getElementById('lista-turnos-admin');
+            const contador = document.getElementById('contador');
+            const tabla = document.getElementById('contenedor-tabla');
+            const filtroFecha = document.getElementById('filtro-fecha').value; 
+
+            lista.innerHTML = '';
+
+            const turnosFiltrados = turnos.filter(t => {
+                if (!t.fecha_hora) return false;
+                const soloFechaTurno = t.fecha_hora.split(' ')[0]; 
+                return soloFechaTurno === filtroFecha;
+            });
+
+            contador.innerText = `${turnosFiltrados.length} TURNOS`;
+
+            if (turnosFiltrados.length === 0) {
+                document.getElementById('mensaje-vacio').style.display = 'block';
+                tabla.style.display = 'none';
+                return;
+            }
+
+            document.getElementById('mensaje-vacio').style.display = 'none';
+            tabla.style.display = 'table';
+
+            turnosFiltrados.forEach(t => {
+                const hora = t.fecha_hora.split(' ')[1];
+                const telLimpio = t.cliente_telefono.replace(/\D/g, '');
+                const linkWS = `https://wa.me/54${telLimpio}`;
+                
+                lista.innerHTML += `
+                    <tr>
+                        <td><strong>${t.cliente_nombre}</strong><br><span class="status-pill">Activo</span></td>
+                        <td>
+                            <a href="${linkWS}" target="_blank" class="btn-table-ws" style="background:#25d366; color:white; padding:8px 15px; border-radius:4px; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; width: fit-content;">
+                                <i class="fab fa-whatsapp"></i> WhatsApp
+                            </a>
+                        </td>
+                        <td style="font-weight: bold; color: var(--accent); font-size: 1.1rem;">${hora} hs</td>
+                        <td class="action-cell">
+                            <button class="btn-table-delete" onclick="eliminarTurno(${t.id})" style="width:40px; height:40px;">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+        } catch (e) { 
+            console.error("Error cargando agenda:", e); 
+        }
+    }
+
+    async function eliminarTurno(id) {
+        if(!confirm("¿Borrar turno?")) return;
+        await fetch(`/api/admin/turnos/${id}`, { method: 'DELETE', ...fetchOptions });
         cargarAgenda();
-        cargarBloqueos();
-        cargarConfiguracion();
+    }
 
-    } catch (error) { 
-        console.error("Error en la verificación de sesión:", error);
+    document.getElementById('form-config').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const dias = Array.from(document.querySelectorAll('input[name="dias"]:checked')).map(cb => cb.value);
+        
+        const config = {
+            m_apertura: document.getElementById('m_apertura').value,
+            m_cierre: document.getElementById('m_cierre').value,
+            t_apertura: document.getElementById('t_apertura').value,
+            t_cierre: document.getElementById('t_cierre').value,
+            intervalo: document.getElementById('intervalo').value,
+            dias_laborales: dias.join(',')
+        };
+
+        const res = await fetch('/api/admin/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config),
+            ...fetchOptions
+        });
+        if(res.ok) alert("✅ Horarios actualizados en la base");
+    });
+
+    function toggleBloqueoHoras() {
+        const tipo = document.getElementById('bloqueo-tipo').value;
+        document.getElementById('bloqueo-horas').style.display = (tipo === 'parcial') ? 'flex' : 'none';
+    }
+
+    document.getElementById('form-bloqueo').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+            fecha: document.getElementById('bloqueo-fecha').value,
+            tipo: document.getElementById('bloqueo-tipo').value,
+            inicio: document.getElementById('bloqueo-inicio').value || null,
+            fin: document.getElementById('bloqueo-fin').value || null
+        };
+        await fetch('/api/admin/bloqueos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+            ...fetchOptions
+        });
+        cargarBloqueos();
+        e.target.reset();
+    });
+
+    async function cargarBloqueos() {
+        const res = await fetch('/api/admin/bloqueos', fetchOptions);
+        const bloqueos = await res.json();
+        const contenedor = document.getElementById('lista-bloqueos');
+        contenedor.innerHTML = bloqueos.length ? '' : '<span style="font-size:0.7rem;">Sin bloqueos</span>';
+        bloqueos.forEach(b => {
+            const info = b.tipo === 'todo' ? 'Todo el día' : `${b.inicio} a ${b.fin}`;
+            contenedor.innerHTML += `
+                <div class="bloqueo-item">
+                    <span><b>${b.fecha}</b> - ${info}</span>
+                    <button class="btn-mini-delete" onclick="eliminarBloqueo(${b.id})">×</button>
+                </div>`;
+        });
+    }
+
+    async function eliminarBloqueo(id) {
+        await fetch(`/api/admin/bloqueos/${id}`, { method: 'DELETE', ...fetchOptions });
+        cargarBloqueos();
+    }
+
+    async function cargarConfiguracion() {
+        try {
+            const res = await fetch('/api/config'); // Esta ruta suele ser pública
+            const data = await res.json();
+            
+            if (data) {
+                if (data.m_apertura) document.getElementById('m_apertura').value = data.m_apertura.slice(0, 5);
+                if (data.m_cierre) document.getElementById('m_cierre').value = data.m_cierre.slice(0, 5);
+                if (data.t_apertura) document.getElementById('t_apertura').value = data.t_apertura.slice(0, 5);
+                if (data.t_cierre) document.getElementById('t_cierre').value = data.t_cierre.slice(0, 5);
+                if (data.intervalo) document.getElementById('intervalo').value = data.intervalo;
+
+                if (data.dias_laborales) {
+                    const dias = data.dias_laborales.split(',');
+                    document.querySelectorAll('input[name="dias"]').forEach(cb => {
+                        cb.checked = dias.includes(cb.value);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Error al cargar la configuración:", error);
+        }
+    }
+
+    async function cerrarSesion() {
+        if (!confirm("¿Cerrar sesión de administrador?")) return;
+        await fetch('/api/logout', { method: 'POST', ...fetchOptions });
         window.location.href = 'login.html';
     }
-}
-
-// Extraé la lógica del flatpickr a una función aparte para que sea más limpio
-function inicializarCalendario() {
-    if (document.getElementById('filtro-fecha')) {
-        flatpickr("#filtro-fecha", {
-            locale: "es",
-            dateFormat: "d/m/Y",
-            defaultDate: "today",
-            onChange: function() {
-                cargarAgenda();
-            }
-        });
-    }
-}
-async function cargarAgenda() {
-    try {
-        const res = await fetch('/api/admin/turnos');
-        const turnos = await res.json();
-        const lista = document.getElementById('lista-turnos-admin');
-        const contador = document.getElementById('contador');
-        const tabla = document.getElementById('contenedor-tabla');
-        const filtroFecha = document.getElementById('filtro-fecha').value; 
-
-        lista.innerHTML = '';
-
-        // 1. Filtrar los turnos por la fecha seleccionada
-        const turnosFiltrados = turnos.filter(t => {
-            if (!t.fecha_hora) return false;
-            const soloFechaTurno = t.fecha_hora.split(' ')[0]; 
-            return soloFechaTurno === filtroFecha;
-        });
-
-        // 2. Actualizar contador
-        contador.innerText = `${turnosFiltrados.length} TURNOS`;
-
-        // 3. Manejar visualización si no hay turnos
-        if (turnosFiltrados.length === 0) {
-            document.getElementById('mensaje-vacio').style.display = 'block';
-            tabla.style.display = 'none';
-            return;
-        }
-
-        document.getElementById('mensaje-vacio').style.display = 'none';
-        tabla.style.display = 'table';
-
-        // 4. Renderizar turnos filtrados
-        turnosFiltrados.forEach(t => {
-            const hora = t.fecha_hora.split(' ')[1]; // Extraemos "HH:mm"
-            
-            // Lógica de WhatsApp limpia
-            const telLimpio = t.cliente_telefono.replace(/\D/g, '');
-            const prefijo = telLimpio.startsWith('54') ? '' : '54'; 
-            const linkWS = `https://wa.me/${prefijo}${telLimpio}`;
-            
-            lista.innerHTML += `
-                <tr>
-                    <td><strong>${t.cliente_nombre}</strong><br><span class="status-pill">Activo</span></td>
-                    <td>
-                        <a href="${linkWS}" target="_blank" class="btn-table-ws" style="background:#25d366; color:white; padding:8px 15px; border-radius:4px; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; width: fit-content;">
-                            <i class="fab fa-whatsapp"></i> WhatsApp
-                        </a>
-                    </td>
-                    <td style="font-weight: bold; color: var(--accent); font-size: 1.1rem;">${hora} hs</td>
-                    <td class="action-cell">
-                        <button class="btn-table-delete" onclick="eliminarTurno(${t.id})" style="width:40px; height:40px;">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-
-    } catch (e) { 
-        console.error("Error cargando agenda:", e); 
-    }
-}
-        async function eliminarTurno(id) {
-            if(!confirm("¿Borrar turno?")) return;
-            await fetch(`/api/admin/turnos/${id}`, { method: 'DELETE' });
-            cargarAgenda();
-        }
-
-        // --- ACTUALIZACIÓN DE CONFIGURACIÓN ---
-        document.getElementById('form-config').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const dias = Array.from(document.querySelectorAll('input[name="dias"]:checked')).map(cb => cb.value);
-            
-            const config = {
-                m_apertura: document.getElementById('m_apertura').value,
-                m_cierre: document.getElementById('m_cierre').value,
-                t_apertura: document.getElementById('t_apertura').value,
-                t_cierre: document.getElementById('t_cierre').value,
-                intervalo: document.getElementById('intervalo').value,
-                dias_laborales: dias.join(',')
-            };
-
-            const res = await fetch('/api/admin/config', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(config)
-            });
-            if(res.ok) alert("✅ Horarios actualizados");
-        });
-
-        // --- BLOQUEOS ---
-        function toggleBloqueoHoras() {
-            const tipo = document.getElementById('bloqueo-tipo').value;
-            document.getElementById('bloqueo-horas').style.display = (tipo === 'parcial') ? 'flex' : 'none';
-        }
-
-        document.getElementById('form-bloqueo').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const data = {
-                fecha: document.getElementById('bloqueo-fecha').value,
-                tipo: document.getElementById('bloqueo-tipo').value,
-                inicio: document.getElementById('bloqueo-inicio').value || null,
-                fin: document.getElementById('bloqueo-fin').value || null
-            };
-            await fetch('/api/admin/bloqueos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            cargarBloqueos();
-            e.target.reset();
-        });
-
-        async function cargarBloqueos() {
-            const res = await fetch('/api/admin/bloqueos');
-            const bloqueos = await res.json();
-            const contenedor = document.getElementById('lista-bloqueos');
-            contenedor.innerHTML = bloqueos.length ? '' : '<span style="font-size:0.7rem;">Sin bloqueos</span>';
-            bloqueos.forEach(b => {
-                const info = b.tipo === 'todo' ? 'Todo el día' : `${b.inicio} a ${b.fin}`;
-                contenedor.innerHTML += `<div class="bloqueo-item"><span><b>${b.fecha}</b> - ${info}</span><button class="btn-mini-delete" onclick="eliminarBloqueo(${b.id})">×</button></div>`;
-            });
-        }
-
-        async function eliminarBloqueo(id) {
-            await fetch(`/api/admin/bloqueos/${id}`, { method: 'DELETE' });
-            cargarBloqueos();
-        }
-
-        async function cargarConfiguracion() {
-    try {
-        const res = await fetch('/api/config');
-        const data = await res.json();
-        
-        if (data) {
-            // Usamos m_ y t_ para que coincida con tus inputs y evitar la "ñ"
-            if (data.m_apertura) document.getElementById('m_apertura').value = data.m_apertura.slice(0, 5);
-            if (data.m_cierre) document.getElementById('m_cierre').value = data.m_cierre.slice(0, 5);
-            if (data.t_apertura) document.getElementById('t_apertura').value = data.t_apertura.slice(0, 5);
-            if (data.t_cierre) document.getElementById('t_cierre').value = data.t_cierre.slice(0, 5);
-            
-            if (data.intervalo) {
-                document.getElementById('intervalo').value = data.intervalo;
-            }
-
-            if (data.dias_laborales) {
-                const dias = data.dias_laborales.split(',');
-                document.querySelectorAll('input[name="dias"]').forEach(cb => {
-                    cb.checked = dias.includes(cb.value);
-                });
-            }
-        }
-    } catch (error) {
-        console.error("Error al cargar la configuración:", error);
-    }
-}
-        async function cerrarSesion() {
-    if (!confirm("¿Cerrar sesión de administrador?")) return;
-    
-    // Llamamos a una ruta de logout que deberías tener en tu index.js
-    await fetch('/api/logout', { method: 'POST' });
-    window.location.href = 'login.html';
-}
-    </script>
+</script>
 </body>
 </html>
