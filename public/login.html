@@ -34,11 +34,16 @@ async function intentarLogin() {
         const res = await fetch('/api/login', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password }),
+            // ESTA LÍNEA ES LA CLAVE:
+            credentials: 'include' 
         });
 
         if (res.ok) {
-            window.location.href = 'admin.html';
+            // Un pequeño delay ayuda a que el navegador guarde la cookie antes de cambiar de página
+            setTimeout(() => {
+                window.location.href = 'admin.html';
+            }, 100);
         } else {
             const data = await res.json();
             errorMsg.innerText = data.message || "Usuario o clave incorrectos";
