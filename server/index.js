@@ -14,12 +14,12 @@ app.use(express.json());
 // 1. CONFIGURACIÓN DE SESIONES (Debe ir antes de las rutas)
 app.use(session({
     secret: 'katana-secret-key-2026',
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // Forzamos a que se guarde la sesión en cada petición
+    saveUninitialized: false, 
+    rolling: true, // Esto refresca el tiempo de expiración de la cookie con cada clic
     cookie: { 
-        maxAge: 3600000,
-        // CORRECCIÓN: true si estás en internet (HTTPS), false si estás en tu PC
-        secure: process.env.NODE_ENV === 'production', 
+        maxAge: 1000 * 60 * 60 * 24, // 1 día de duración
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax'
     }
 }));
@@ -32,8 +32,6 @@ const authRequired = (req, res, next) => {
         return res.status(401).json({ error: "No autorizado. Por favor, iniciá sesión." });
     }
 };
-
-// 3. Ruta de Login mejorada con Base de Datos
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body; 
     try {
@@ -44,9 +42,21 @@ app.post('/api/login', async (req, res) => {
 
         if (result.rows.length > 0) {
             const user = result.rows[0];
+            
+            // Seteamos los datos
             req.session.admin = true;
-            req.session.barberoId = user.barbero_id; // Guardamos el ID del barbero en la sesión
-            res.json({ success: true, barberoId: user.barbero_id });
+            req.session.barberoId = user.barbero_id;
+
+            // --- CRUCIAL: Forzamos el guardado manual ---
+            req.session.save((err) => {
+                if (err) {
+                    console.error("Error al guardar sesión:", err);
+                    return res.status(500).json({ error: "Error al iniciar sesión" });
+                }
+                // Recién cuando estamos SEGUROS de que se guardó, respondemos
+                res.json({ success: true, barberoId: user.barbero_id });
+            });
+            
         } else {
             res.status(401).json({ success: false, message: 'Usuario o clave incorrectos' });
         }
@@ -55,7 +65,6 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ error: "Error en el servidor" });
     }
 });
-
 // ---------------------------------------------------------
 // RUTA PARA GUARDAR CONFIGURACIÓN (Actualizada para Horario Cortado y Días)
 // ---------------------------------------------------------
