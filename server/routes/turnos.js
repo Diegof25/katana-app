@@ -136,19 +136,30 @@ router.post('/reservar', async (req, res) => {
 // --- ADMIN: ACTUALIZAR CONFIGURACIÓN (CON DOBLE TURNO) ---
 router.post('/admin/config', async (req, res) => {
     const { m_apertura, m_cierre, t_apertura, t_cierre, intervalo, dias_laborales } = req.body;
+    
+    // IMPORTANTE: Sacamos el ID del barbero de la sesión
+    const barberoId = req.session.barberoId;
+
+    if (!barberoId) {
+        return res.status(401).json({ error: "Sesión no válida" });
+    }
+
     try {
         await pool.query(
-            `INSERT INTO configuracion (id, mañana_apertura, mañana_cierre, tarde_apertura, tarde_cierre, intervalo, dias_laborales) 
-             VALUES (1, $1, $2, $3, $4, $5, $6) 
-             ON CONFLICT (id) DO UPDATE SET 
-                mañana_apertura = $1, mañana_cierre = $2, 
-                tarde_apertura = $3, tarde_cierre = $4, 
-                intervalo = $5, dias_laborales = $6`,
-            [m_apertura, m_cierre, t_apertura, t_cierre, intervalo, dias_laborales]
+            `INSERT INTO configuracion (barbero_id, mañana_apertura, mañana_cierre, tarde_apertura, tarde_cierre, intervalo, dias_laborales) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7) 
+             ON CONFLICT (barbero_id) DO UPDATE SET 
+                mañana_apertura = EXCLUDED.mañana_apertura, 
+                mañana_cierre = EXCLUDED.mañana_cierre, 
+                tarde_apertura = EXCLUDED.tarde_apertura, 
+                tarde_cierre = EXCLUDED.tarde_cierre, 
+                intervalo = EXCLUDED.intervalo, 
+                dias_laborales = EXCLUDED.dias_laborales`,
+            [barberoId, m_apertura, m_cierre, t_apertura, t_cierre, intervalo, dias_laborales]
         );
         res.json({ success: true });
     } catch (err) {
-        console.error(err);
+        console.error("Error al guardar config en turnos.js:", err);
         res.status(500).json({ error: "Error al guardar configuración" });
     }
 });

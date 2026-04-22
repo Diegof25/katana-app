@@ -171,12 +171,14 @@ app.post('/api/admin/bloqueos', authRequired, async (req, res) => {
 
 // Ruta para obtener la lista de bloqueos (Esto hará que aparezcan en el panel)
 app.get('/api/admin/bloqueos', authRequired, async (req, res) => {
+    const barberoId = req.session.barberoId; // Filtramos por el dueño de la sesión
     try {
         const result = await pool.query(
-        "SELECT id, TO_CHAR(fecha AT TIME ZONE 'UTC' AT TIME ZONE 'ART', 'YYYY-MM-DD') as fecha, tipo, hora_inicio as inicio, hora_fin as fin FROM bloqueos ORDER BY fecha ASC"        );
+            "SELECT id, TO_CHAR(fecha, 'YYYY-MM-DD') as fecha, tipo, hora_inicio as inicio, hora_fin as fin FROM bloqueos WHERE barbero_id = $1 ORDER BY fecha ASC",
+            [barberoId]
+        );
         res.json(result.rows);
     } catch (err) {
-        console.error(err);
         res.status(500).json({ error: "Error al obtener bloqueos" });
     }
 });
