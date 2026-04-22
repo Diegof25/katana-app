@@ -16,7 +16,6 @@ app.use(cors({
     credentials: true // Crucial: permite que las cookies viajen
 }));
 
-app.use(express.json());
 
 // 2. Ajuste en la configuración de SESIONES
 app.use(session({

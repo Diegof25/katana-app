@@ -1,5 +1,6 @@
 let servicioSeleccionado = null;
 let barberoSeleccionado = null;
+let calendario = null;
 
 // 1. Cargar Barberos (Nueva función)
 async function cargarBarberos() {
@@ -18,13 +19,31 @@ async function cargarBarberos() {
             selectBarbero.appendChild(option);
         });
 
-        selectBarbero.addEventListener('change', (e) => {
-            barberoSeleccionado = e.target.value;
-            // Si cambia el barbero, reseteamos fecha y hora para evitar errores
-            document.getElementById('fecha').value = '';
-            document.getElementById('select-hora').innerHTML = '<option value="">Seleccioná un día primero</option>';
-            document.getElementById('select-hora').disabled = true;
-        });
+        selectBarbero.addEventListener('change', async (e) => {
+    barberoSeleccionado = e.target.value;
+    
+    // 1. Pedimos la configuración de este barbero específico
+    const res = await fetch(`/api/config?barbero_id=${barberoSeleccionado}`);
+    const config = await res.json();
+
+    if (config.dias_laborales) {
+        // Convertimos "1,2,3" en un array de números [1, 2, 3]
+        const diasQueTrabaja = config.dias_laborales.split(',').map(Number);
+        
+        // Configuramos el calendario para que bloquee los días que NO están en esa lista
+        calendario.set("disable", [
+            function(date) {
+                // date.getDay() devuelve 0 para domingo, 1 para lunes, etc.
+                return !diasQueTrabaja.includes(date.getDay());
+            }
+        ]);
+    }
+
+    // Reseteamos lo demás
+    document.getElementById('fecha').value = '';
+    document.getElementById('select-hora').innerHTML = '<option value="">Seleccioná un día primero</option>';
+    document.getElementById('select-hora').disabled = true;
+});
     } catch (error) {
         console.error("Error al cargar barberos:", error);
     }
@@ -57,15 +76,14 @@ async function cargarServicios() {
 
 // 2. Inicializar Flatpickr
 const hoy = new Date();
-// Quitamos la variable 'mañana' porque ya no la necesitamos para el minDate
 const limiteDosSemanas = new Date(hoy);
 limiteDosSemanas.setDate(hoy.getDate() + 14);
 
-flatpickr("#fecha", {
+calendario = flatpickr("#fecha", { // <--- ASIGNAMOS A LA VARIABLE
     locale: "es",
-    minDate: "today", // <--- CAMBIO CLAVE: Permite seleccionar el día actual
+    minDate: "today",
     maxDate: limiteDosSemanas,
-    disable: [date => date.getDay() === 0], // Sigue bloqueando Domingos
+    // Dejamos el disable vacío al principio o con una regla general
     onChange: function(selectedDates, dateStr) {
         cargarHorariosDisponibles(dateStr);
     }
