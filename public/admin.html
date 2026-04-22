@@ -389,30 +389,36 @@
     });
 
     async function verificarSesion() {
-        try {
-            // 1. Pequeño respiro para asegurar que la cookie esté lista
-            await new Promise(r => setTimeout(r, 100));
+    try {
+        // 1. Un pequeño delay para que el navegador asiente la cookie
+        await new Promise(r => setTimeout(r, 200));
 
-            // 2. Intentamos cargar turnos (si falla es porque no somos admin)
-            const res = await fetch('/api/admin/turnos', fetchOptions);
+        // 2. IMPORTANTE: Definir las opciones aquí mismo para no fallar
+        const opciones = { 
+            method: 'GET',
+            credentials: 'include' // <--- ESTO ES LO QUE TE DA EL ACCESO
+        };
 
-            if (res.status === 401) {
-                console.warn("No autorizado. Redirigiendo...");
-                window.location.href = 'login.html';
-                return;
-            }
+        const res = await fetch('/api/admin/turnos', opciones);
 
-            // 3. Si es válido, inicializamos el resto
-            inicializarCalendario();
-            cargarBloqueos();
-            cargarConfiguracion();
-
-        } catch (error) {
-            console.error("Error en la verificación:", error);
+        // Si el servidor responde 401, al login
+        if (res.status === 401) {
+            console.warn("Sesión no válida o expirada.");
             window.location.href = 'login.html';
+            return;
         }
-    }
 
+        // 3. Si el status es 200 (OK), cargamos todo
+        console.log("Sesión verificada con éxito.");
+        inicializarCalendario();
+        cargarBloqueos();
+        cargarConfiguracion();
+
+    } catch (error) {
+        console.error("Error de conexión con el servidor:", error);
+        // Si hay error de red, no redirijas al toque para poder ver el error en consola
+    }
+}
     function inicializarCalendario() {
         if (document.getElementById('filtro-fecha')) {
             flatpickr("#filtro-fecha", {

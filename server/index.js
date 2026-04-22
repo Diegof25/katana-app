@@ -153,6 +153,14 @@ app.delete('/api/admin/bloqueos/:id', authRequired, async (req, res) => {
     }
 });
 
+app.post('/api/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) return res.status(500).json({ error: "No se pudo cerrar sesión" });
+        res.clearCookie('connect.sid'); // Limpia la cookie del navegador
+        res.json({ success: true });
+    });
+});
+
 // 5. SERVIR ARCHIVOS ESTÁTICOS (Al final de todo)
 app.use(express.static(path.join(__dirname, '../public')));
 
