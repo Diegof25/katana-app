@@ -76,25 +76,27 @@ app.post('/api/login', async (req, res) => {
 // ---------------------------------------------------------
 app.post('/api/admin/config', authRequired, async (req, res) => {
     const { m_apertura, m_cierre, t_apertura, t_cierre, intervalo, dias_laborales } = req.body;
-    const barberoId = req.session.barberoId; // <--- USAMOS EL ID DEL QUE ESTÁ LOGUEADO
+    const barberoId = req.session.barberoId;
 
     try {
         await pool.query(
-            `INSERT INTO configuracion (barbero_id, mañana_apertura, mañana_cierre, tarde_apertura, tarde_cierre, intervalo, dias_laborales) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7) 
-             ON CONFLICT (barbero_id) DO UPDATE SET 
-                mañana_apertura = $2, mañana_cierre = $3, 
-                tarde_apertura = $4, tarde_cierre = $5, 
-                intervalo = $6, dias_laborales = $7`,
+            `INSERT INTO configuracion (barbero_id, mañana_apertura, mañana_cierre, tarde_apertura, tarde_cierre, intervalo, dias_laborales)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (barbero_id) DO UPDATE SET
+                mañana_apertura = EXCLUDED.mañana_apertura,
+                mañana_cierre = EXCLUDED.mañana_cierre,
+                tarde_apertura = EXCLUDED.tarde_apertura,
+                tarde_cierre = EXCLUDED.tarde_cierre,
+                intervalo = EXCLUDED.intervalo,
+                dias_laborales = EXCLUDED.dias_laborales`,
             [barberoId, m_apertura, m_cierre, t_apertura, t_cierre, intervalo, dias_laborales]
         );
         res.json({ success: true });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Error al guardar" });
+        console.error("Error al guardar configuración:", err);
+        res.status(500).json({ error: "Error en la base de datos" });
     }
 });
-
 // Ruta para obtener configuración (Pública para que cargue el Admin y el Index)
 app.get('/api/config', async (req, res) => {
     try {

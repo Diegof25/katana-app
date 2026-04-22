@@ -563,30 +563,30 @@
         cargarBloqueos();
     }
 
-    async function cargarConfiguracion() {
-        try {
-            const res = await fetch('/api/config'); 
-            const data = await res.json();
-            
-            if (data) {
-                // CORRECCIÓN: Nombres de campos ajustados a las columnas de la base de datos
-                if (data.mañana_apertura) document.getElementById('m_apertura').value = data.mañana_apertura.slice(0, 5);
-                if (data.mañana_cierre) document.getElementById('m_cierre').value = data.mañana_cierre.slice(0, 5);
-                if (data.tarde_apertura) document.getElementById('t_apertura').value = data.tarde_apertura.slice(0, 5);
-                if (data.tarde_cierre) document.getElementById('t_cierre').value = data.tarde_cierre.slice(0, 5);
-                if (data.intervalo) document.getElementById('intervalo').value = data.intervalo;
+async function cargarConfiguracion() {
+    try {
+        // Cambiamos a la ruta de admin que debería estar protegida y filtrar por sesión
+        const res = await fetch('/api/admin/config-personal', fetchOptions); 
+        const data = await res.json();
+        
+        if (data && res.ok) {
+            if (data.mañana_apertura) document.getElementById('m_apertura').value = data.mañana_apertura.slice(0, 5);
+            if (data.mañana_cierre) document.getElementById('m_cierre').value = data.mañana_cierre.slice(0, 5);
+            if (data.tarde_apertura) document.getElementById('t_apertura').value = data.tarde_apertura.slice(0, 5);
+            if (data.tarde_cierre) document.getElementById('t_cierre').value = data.tarde_cierre.slice(0, 5);
+            if (data.intervalo) document.getElementById('intervalo').value = data.intervalo;
 
-                if (data.dias_laborales) {
-                    const dias = data.dias_laborales.split(',');
-                    document.querySelectorAll('input[name="dias"]').forEach(cb => {
-                        cb.checked = dias.includes(cb.value);
-                    });
-                }
+            if (data.dias_laborales) {
+                const dias = data.dias_laborales.split(',');
+                document.querySelectorAll('input[name="dias"]').forEach(cb => {
+                    cb.checked = dias.includes(cb.value);
+                });
             }
-        } catch (error) {
-            console.error("Error al cargar la configuración:", error);
         }
+    } catch (error) {
+        console.error("Error al cargar la configuración:", error);
     }
+}
 
     async function cerrarSesion() {
         if (!confirm("¿Cerrar sesión de administrador?")) return;

@@ -27,24 +27,34 @@ router.get('/horarios-disponibles', async (req, res) => {
     const { fecha, barbero_id } = req.query; 
     
     try {
-        // 1. PRIMERO: Verificar si hay un bloqueo total (franco/feriado)
+        // 1. Verificar si hay un bloqueo total para ESTE barbero o general
         const bloqueoTotal = await pool.query(
-            "SELECT id FROM bloqueos WHERE fecha = $1 AND tipo = 'todo'", 
-            [fecha]
+            "SELECT id FROM bloqueos WHERE fecha = $1 AND tipo = 'todo' AND (barbero_id = $2 OR barbero_id IS NULL)", 
+            [fecha, barbero_id]
         );
 
         if (bloqueoTotal.rows.length > 0) {
             return res.json({ 
                 horarios: [], 
-                mensaje: "Día no disponible (Franco/Bloqueado)" 
+                mensaje: "Día no disponible para este barbero" 
             });
         }
 
-        // 2. Traer la configuración de horarios
-        const configResult = await pool.query('SELECT * FROM configuracion LIMIT 1');
+        // 2. Traer la configuración ESPECÍFICA de este barbero
+        // IMPORTANTE: Tu tabla configuracion debe tener la columna barbero_id
+        const configResult = await pool.query(
+            'SELECT * FROM configuracion WHERE barbero_id = $1', 
+            [barbero_id]
+        );
+        
         const config = configResult.rows[0];
 
-        // --- CORRECCIÓN DEL ERROR DE DÍA LABORAL ---
+        // Si el barbero no configuró nada, podrías usar una por defecto o dar error
+        if (!config) {
+            return res.json({ horarios: [], mensaje: "Barbero sin horarios configurados" });
+        }
+
+        // 3. Verificar día laboral
         const [year, month, day] = fecha.split('-').map(Number);
         const diaSemana = new Date(year, month - 1, day).getDay(); 
         const diasLaborales = config.dias_laborales.split(',').map(d => d.trim());
@@ -52,17 +62,17 @@ router.get('/horarios-disponibles', async (req, res) => {
         if (!diasLaborales.includes(diaSemana.toString())) {
             return res.json({ horarios: [], mensaje: "Cerrado este día" });
         }
-        // --------------------------------------------
 
-        // 4. Traer turnos ya tomados (FILTRADO POR BARBERO) y bloqueos parciales
+        // 4. Traer turnos tomados SOLO para este barbero
         const turnosOcupados = await pool.query(
             `SELECT TO_CHAR(fecha_hora AT TIME ZONE 'UTC' AT TIME ZONE 'America/Argentina/Buenos_Aires', 'HH24:MI') as hora 
             FROM turnos 
             WHERE DATE(fecha_hora AT TIME ZONE 'UTC' AT TIME ZONE 'America/Argentina/Buenos_Aires') = $1
-            AND barbero_id = $2`,
+            AND barbero_id = $2`, 
             [fecha, barbero_id]
         );
 
+        // 5. Traer bloqueos parciales SOLO para este barbero o generales
         const bloqueosParciales = await pool.query(
             `SELECT TO_CHAR(hora_inicio, 'HH24:MI') as inicio, TO_CHAR(hora_fin, 'HH24:MI') as fin 
             FROM bloqueos 
@@ -74,43 +84,26 @@ router.get('/horarios-disponibles', async (req, res) => {
         const horasOcupadas = turnosOcupados.rows.map(t => t.hora);
         let horariosPosibles = [];
 
-        // Función auxiliar para generar slots (Mañana y Tarde)
         const generarSlots = (inicioStr, finStr) => {
             if (!inicioStr || !finStr) return;
 
             let actual = new Date(`2026-01-01 ${inicioStr}`);
             let limite = new Date(`2026-01-01 ${finStr}`);
-
             const ahora = new Date();
-            
-            const fechaHoyStr = ahora.toLocaleDateString('en-CA', { 
-                timeZone: 'America/Argentina/Buenos_Aires' 
-            });
-
-            const tiempoCorte = new Date(ahora.toLocaleString('en-US', { 
-                timeZone: 'America/Argentina/Buenos_Aires' 
-            }));
+            const fechaHoyStr = ahora.toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+            const tiempoCorte = new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
             tiempoCorte.setMinutes(tiempoCorte.getMinutes() + 30);
-            
-            const horaCorteStr = tiempoCorte.toLocaleTimeString('es-AR', { 
-                hour12: false, 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
+            const horaCorteStr = tiempoCorte.toLocaleTimeString('es-AR', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
             while (actual < limite) {
                 let horaTexto = actual.toTimeString().slice(0, 5);
-                
-                const estaEnBloqueoParcial = bloqueosParciales.rows.some(b => 
-                    horaTexto >= b.inicio && horaTexto < b.fin
-                );
-                
+                const estaEnBloqueoParcial = bloqueosParciales.rows.some(b => horaTexto >= b.inicio && horaTexto < b.fin);
                 let yaPaso = (fecha === fechaHoyStr && horaTexto <= horaCorteStr);
 
+                // Aquí está la magia: filtramos contra las horas ocupadas DE ESTE BARBERO
                 if (!horasOcupadas.includes(horaTexto) && !estaEnBloqueoParcial && !yaPaso) {
                     horariosPosibles.push(horaTexto);
                 }
-
                 actual.setMinutes(actual.getMinutes() + parseInt(config.intervalo));
             }
         };
@@ -122,7 +115,7 @@ router.get('/horarios-disponibles', async (req, res) => {
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "Error al consultar disponibilidad" });
+        res.status(500).json({ error: "Error de servidor" });
     }
 });
 // --- CLIENTE: RESERVAR ---
