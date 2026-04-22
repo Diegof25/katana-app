@@ -75,22 +75,23 @@ app.post('/api/login', async (req, res) => {
 // RUTA PARA GUARDAR CONFIGURACIÓN (Actualizada para Horario Cortado y Días)
 // ---------------------------------------------------------
 app.post('/api/admin/config', authRequired, async (req, res) => {
-    // Recibimos los 4 horarios en lugar de 2
     const { m_apertura, m_cierre, t_apertura, t_cierre, intervalo, dias_laborales } = req.body;
+    const barberoId = req.session.barberoId; // <--- USAMOS EL ID DEL QUE ESTÁ LOGUEADO
+
     try {
         await pool.query(
-            `INSERT INTO configuracion (id, mañana_apertura, mañana_cierre, tarde_apertura, tarde_cierre, intervalo, dias_laborales) 
-             VALUES (1, $1, $2, $3, $4, $5, $6) 
-             ON CONFLICT (id) DO UPDATE SET 
-                mañana_apertura = $1, mañana_cierre = $2, 
-                tarde_apertura = $3, tarde_cierre = $4, 
-                intervalo = $5, dias_laborales = $6`,
-            [m_apertura, m_cierre, t_apertura, t_cierre, intervalo, dias_laborales]
+            `INSERT INTO configuracion (barbero_id, mañana_apertura, mañana_cierre, tarde_apertura, tarde_cierre, intervalo, dias_laborales) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7) 
+             ON CONFLICT (barbero_id) DO UPDATE SET 
+                mañana_apertura = $2, mañana_cierre = $3, 
+                tarde_apertura = $4, tarde_cierre = $5, 
+                intervalo = $6, dias_laborales = $7`,
+            [barberoId, m_apertura, m_cierre, t_apertura, t_cierre, intervalo, dias_laborales]
         );
-        res.json({ success: true, message: "Configuración guardada" });
+        res.json({ success: true });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "Error al guardar configuración" });
+        res.status(500).json({ error: "Error al guardar" });
     }
 });
 
