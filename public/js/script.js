@@ -256,23 +256,93 @@ window.addEventListener('scroll', function() {
 });
 
 
+// --- 1. FUNCIÓN PARA CAMBIAR ENTRE BARBEROS ---
 function mostrarGaleria(nombreBarbero) {
-    // 1. Ocultar todas las galerías (les ponemos la clase que tiene display: none)
+    // Ocultar todas las galerías de barberos
     document.querySelectorAll('.galeria-barbero').forEach(gal => {
         gal.classList.add('galeria-oculta');
     });
 
-    // 2. Mostrar solo la del barbero seleccionado
-    const galeriaSeleccionada = document.getElementById(`galeria-${nombreBarbero}`);
-    if (galeriaSeleccionada) {
-        galeriaSeleccionada.classList.remove('galeria-oculta');
+    // Mostrar la seleccionada por ID
+    const seleccionada = document.getElementById(`galeria-${nombreBarbero}`);
+    if (seleccionada) {
+        seleccionada.classList.remove('galeria-oculta');
+        
+        // Reiniciar la posición al primer slide cada vez que se cambia
+        const track = seleccionada.querySelector('.carousel-track');
+        if (track) {
+            track.style.transform = 'translateX(0px)';
+        }
     }
 
-    // 3. Cambiar el estilo del botón activo para que sepa cuál está seleccionado
+    // Actualizar el estado visual de los botones
     document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
     
-    // El 'event' es automático cuando hacés clic
-    if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
+    // El 'event' permite detectar qué botón disparó la función
+    if (window.event && window.event.currentTarget) {
+        window.event.currentTarget.classList.add('active');
     }
+    
+    // Notificamos al navegador que el contenido cambió para evitar errores de scroll
+    window.dispatchEvent(new Event('resize'));
 }
+
+// --- 2. LÓGICA UNIVERSAL PARA LAS FLECHAS (GIRAR FOTOS) ---
+document.addEventListener('click', (e) => {
+    // Detectar si el clic fue en una flecha (prev o next)
+    const btn = e.target.closest('.carousel-btn');
+    if (!btn) return;
+
+    // Encontrar el carrusel específico donde se hizo clic
+    const container = btn.closest('.carousel-container');
+    const track = container.querySelector('.carousel-track');
+    const slides = Array.from(track.children);
+    
+    if (slides.length === 0) return;
+
+    // Calcular el ancho de una imagen para saber cuánto desplazar
+    const slideWidth = slides[0].getBoundingClientRect().width + 20; // Ancho + gap (20px)
+    
+    // Obtener la posición actual del transform
+    let currentTransform = 0;
+    const style = window.getComputedStyle(track);
+    const matrix = new WebKitCSSMatrix(style.transform);
+    currentTransform = matrix.m41; // Extrae el valor de X
+
+    // Lógica de movimiento
+    if (btn.classList.contains('next')) {
+        // Límite máximo de scroll hacia la izquierda
+        const maxScroll = -(track.scrollWidth - container.offsetWidth);
+        
+        if (currentTransform > maxScroll + 10) { // +10 de margen de error
+            track.style.transform = `translateX(${currentTransform - slideWidth}px)`;
+        } else {
+            // Si llega al final, vuelve al inicio
+            track.style.transform = `translateX(0px)`;
+        }
+    } else if (btn.classList.contains('prev')) {
+        // No permitir scroll más allá del inicio
+        if (currentTransform < -10) {
+            track.style.transform = `translateX(${currentTransform + slideWidth}px)`;
+        }
+    }
+});
+
+
+document.querySelectorAll('.carousel-slide').forEach(item => {
+    item.addEventListener('click', function() {
+        const video = this.querySelector('video');
+        if (video) {
+            if (video.paused) {
+                // Pausar todos los demás videos antes de arrancar este (opcional)
+                document.querySelectorAll('video').forEach(v => v.pause());
+                
+                video.play();
+                this.classList.add('playing'); // Para esconder el icono de play
+            } else {
+                video.pause();
+                this.classList.remove('playing');
+            }
+        }
+    });
+});

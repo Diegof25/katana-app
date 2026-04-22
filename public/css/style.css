@@ -339,22 +339,243 @@ footer { padding: 60px 5%; text-align: center; border-top: 1px solid #222; backg
     margin-right: 5px;
 }
 
-/* Oculta las galerías que no están seleccionadas */
-.galeria-oculta {
-    display: none;
+/* --- CORRECCIÓN GLOBAL --- */
+body {
+    background-color: var(--dark);
+    color: var(--text);
+    font-family: 'Poppins', sans-serif;
+    overflow-x: hidden;
+    overflow-y: auto; /* Forzamos el scroll vertical */
+    min-height: 100vh;
 }
 
-/* Opcional: un efecto suave al aparecer */
-.galeria-barbero {
-    animation: fadeIn 0.5s ease;
+/* --- BOTONES DE GALERÍA (ESTILO KATANA) --- */
+.filter-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 40px 0;
+    flex-wrap: wrap;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.btn-filter {
+    background-color: transparent;
+    color: var(--accent); /* Usando tu amarillo */
+    border: 2px solid var(--accent);
+    padding: 10px 25px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-radius: 4px; /* Cuadrado con bordes suaves como tus otros botones */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Oswald', sans-serif;
+}
+
+.btn-filter:hover {
+    background-color: var(--accent);
+    color: black;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(255, 180, 0, 0.3);
 }
 
 .btn-filter.active {
-    background-color: #192A56;
-    color: white;
+    background-color: var(--accent);
+    color: black;
+    box-shadow: 0 0 20px rgba(255, 180, 0, 0.2);
+}
+
+/* --- CONTENEDOR DE FOTOS --- */
+.galeria-barbero {
+    animation: fachaFadeIn 0.6s ease-out;
+}
+
+.galeria-oculta {
+    display: none !important;
+}
+
+@keyframes fachaFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- AJUSTE IMÁGENES DEL CARRUSEL --- */
+.galeria-barbero .carousel-slide img {
+    border: 1px solid #222;
+    filter: brightness(0.8);
+    transition: 0.4s;
+}
+
+.galeria-barbero .carousel-slide img:hover {
+    filter: brightness(1.1);
+    border-color: var(--accent);
+}
+html, body {
+    height: auto !important;
+    overflow-y: visible !important;
+}
+
+#galeria {
+    min-height: 600px; /* Asegura un espacio mínimo para que el scroll tenga "que recorrer" */
+    display: block !important;
+}
+@media (max-width: 600px) {
+    /* 1. Achicamos el contenedor para que no ocupe tanto margen */
+    .carousel-container {
+        margin-top: 20px;
+        padding: 0 10px;
+    }
+
+    /* 2. Bajamos la altura de las fotos para que no sean eternas */
+    .carousel-slide img {
+        height: 320px; /* Un tamaño más equilibrado para el pulgar */
+        border-radius: 8px; /* Bordes un poco más finos para pantalla chica */
+    }
+
+    /* 3. Ajustamos las flechas para que no tapen la foto */
+    .carousel-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 0.8rem;
+    }
+
+    .prev { left: -5px; }
+    .next { right: -5px; }
+
+    /* 4. Achicamos un poco los botones de los barberos para que entren en una fila */
+    .btn-filter {
+        padding: 8px 16px;
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+    }
+}
+
+/* Aseguramos que el video ocupe todo su contenedor como las fotos */
+.carousel-slide video {
+    width: 100%;
+    height: 450px; /* Misma altura que tus fotos en PC */
+    object-fit: cover; /* Para que no se deforme */
+    border-radius: 12px;
+    border: 2px solid #222;
+    transition: 0.4s all ease;
+    background: #000; /* Fondo negro mientras carga */
+}
+
+/* Efecto hover también para videos */
+.carousel-slide video:hover {
+    border-color: var(--accent);
+    transform: scale(1.03);
+    box-shadow: 0 10px 25px rgba(255, 180, 0, 0.2);
+}
+
+/* Ajuste para celular */
+@media (max-width: 600px) {
+    .carousel-slide video {
+        height: 320px; /* Misma altura que ajustamos para las fotos */
+    }
+}
+
+.instagram-bar {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 25px auto;
+    max-width: 900px;
+}
+
+.insta-mini-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #111; /* Un toque más oscuro */
+    padding: 6px 14px;
+    border-radius: 50px; /* Estilo cápsula/píldora */
+    border: 1px solid #222;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.insta-circle {
+    width: 28px;
+    height: 28px;
+    background: #222;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    font-size: 0.85rem;
+    transition: 0.3s;
+}
+
+.insta-mini-card span {
+    font-family: 'Oswald', sans-serif;
+    color: #ccc;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* Efecto al pasar el mouse */
+.insta-mini-card:hover {
+    border-color: #e1306c;
+    background: #1a1a1a;
+    transform: translateY(-2px);
+}
+
+.insta-mini-card:hover .insta-circle {
+    background: linear-gradient(45deg, #f09433, #dc2743, #bc1888);
+    color: #fff;
+}
+
+.insta-mini-card:hover span {
+    color: #fff;
+}
+
+/* Para celular se ven dos y dos */
+@media (max-width: 600px) {
+    .instagram-bar {
+        gap: 8px;
+    }
+    .insta-mini-card {
+        padding: 5px 10px;
+    }
+}
+
+.carousel-slide {
+    position: relative;
+    cursor: pointer;
+}
+
+.play-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 180, 0, 0.7); /* Tu color amarillo con transparencia */
+    color: #000;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+    pointer-events: none; /* Para que el click pase al video */
+}
+
+/* Escondemos el icono cuando el video se está reproduciendo */
+.carousel-slide.playing .play-overlay {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Efecto hover en el slide */
+.carousel-slide:hover .play-overlay {
+    transform: translate(-50%, -50%) scale(1.1);
+    background: rgba(255, 180, 0, 1);
 }

@@ -98,11 +98,27 @@
                     </div>
                 </div>
 
-                <div class="about-cta">
-                    <a href="https://www.instagram.com/katana.barbershop/" target="_blank" class="btn-outline">
-                        <i class="fab fa-instagram"></i> Ver Galería
-                    </a>
-                </div>
+                <div class="instagram-bar">
+    <a href="https://www.instagram.com/katana.barbershop/" target="_blank" class="insta-mini-card">
+        <div class="insta-circle"><i class="fab fa-instagram"></i></div>
+        <span>Luciano</span>
+    </a>
+
+    <a href="https://www.instagram.com/lw.barberia/" target="_blank" class="insta-mini-card">
+        <div class="insta-circle"><i class="fab fa-instagram"></i></div>
+        <span>Walter</span>
+    </a>
+
+    <a href="https://www.instagram.com/valen_barberx1/" target="_blank" class="insta-mini-card">
+        <div class="insta-circle"><i class="fab fa-instagram"></i></div>
+        <span>Valen</span>
+    </a>
+
+    <a href="https://www.instagram.com/nacho_ig/" target="_blank" class="insta-mini-card">
+        <div class="insta-circle"><i class="fab fa-instagram"></i></div>
+        <span>Nacho</span>
+    </a>
+</div>
             </div>
         </div>
     </div>
@@ -112,36 +128,83 @@
     <div class="container">
         <div class="text-center section-header">
             <span class="subtitle">Portfolio</span>
-            <h2>NUESTRO TRABAJO</h2>
+            <h2 class="text-gradient">NUESTRO TRABAJO</h2>
             <div class="divider"></div>
         </div>
 
-        <div class="filter-buttons text-center mb-4">
-            <button class="btn-filter active" onclick="mostrarGaleria('katana')">Katana</button>
+        <div class="filter-buttons">
+            <button class="btn-filter active" onclick="mostrarGaleria('katana')">Luciano</button>
             <button class="btn-filter" onclick="mostrarGaleria('walter')">Walter</button>
             <button class="btn-filter" onclick="mostrarGaleria('valen')">Valen</button>
-            <button class="btn-filter" onclick="mostrarGaleria('diego')">Diego</button>
+            <button class="btn-filter" onclick="mostrarGaleria('diego')">Nacho</button>
         </div>
 
-        <div id="galeria-katana" class="carousel-container galeria-barbero">
-            <div class="carousel-track-container">
-                <ul class="carousel-track">
-                    <li class="carousel-slide"><img src="img/katana/corte1.PNG" alt="Corte 1"></li>
-                    <li class="carousel-slide"><img src="img/katana/Corte2.PNG" alt="Corte 2"></li>
-                    <li class="carousel-slide"><img src="img/katana/corte3.PNG" alt="Corte 3"></li>
-                    <li class="carousel-slide"><img src="img/katana/Corte4.PNG" alt="Corte 3"></li>
-                </ul>
-            </div>
-        </div>
+<div id="galeria-luciano" class="carousel-container galeria-barbero">
+    <button class="carousel-btn prev"><i class="fas fa-chevron-left"></i></button>
+    <div class="carousel-track-container">
+        <ul class="carousel-track">
+            <li class="carousel-slide"><video src="img/luciano/1.mp4" loop muted playsinline preload="none"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><video src="img/luciano/2.mp4" loop muted playsinline preload="none"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><video src="img/luciano/3.mp4" loop muted playsinline preload="none"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><video src="img/luciano/4.mp4" loop muted playsinline preload="none"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><video src="img/luciano/5.mp4" loop muted playsinline preload="none"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><video src="img/luciano/6.mp4" loop muted playsinline preload="none"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+        </ul>
+    </div>
+    <button class="carousel-btn next"><i class="fas fa-chevron-right"></i></button>
+</div>
 
-        <div id="galeria-walter" class="carousel-container galeria-barbero galeria-oculta">
-            <div class="carousel-track-container">
-                <ul class="carousel-track">
-                    <li class="carousel-slide"><img src="img/walter/Corte3.PNG" alt="Corte 1"></li>
-                    <li class="carousel-slide"><img src="img/walter/Corte4.PNG" alt="Corte 2"></li>
-                </ul>
-            </div>
-        </div>
+<div id="galeria-walter" class="carousel-container galeria-barbero galeria-oculta">
+    <button class="carousel-btn prev"><i class="fas fa-chevron-left"></i></button>
+    <div class="carousel-track-container">
+        <ul class="carousel-track">
+            <li class="carousel-slide"><img src="img/walter/1.jpeg" alt="Corte Walter 1"></li>
+            <li class="carousel-slide"><video src="img/walter/9.mp4" loop muted playsinline preload="none" poster="img/walter/1.jpeg"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><img src="img/walter/2.jpeg" alt="Corte Walter 2"></li>
+            <li class="carousel-slide"><video src="img/walter/10.mp4" loop muted playsinline preload="none" poster="img/walter/2.jpeg"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><img src="img/walter/3.jpeg" alt="Corte Walter 3"></li>
+            <li class="carousel-slide"><video src="img/walter/11.mp4" loop muted playsinline preload="none" poster="img/walter/3.jpeg"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><img src="img/walter/4.jpeg" alt="Corte Walter 4"></li>
+            <li class="carousel-slide"><video src="img/walter/12.mp4" loop muted playsinline preload="none" poster="img/walter/4.jpeg"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><img src="img/walter/5.jpeg" alt="Corte Walter 5"></li>
+            <li class="carousel-slide"><video src="img/walter/13.mp4" loop muted playsinline preload="none" poster="img/walter/5.jpeg"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><img src="img/walter/6.jpeg" alt="Corte Walter 6"></li>
+            <li class="carousel-slide"><video src="img/walter/14.mp4" loop muted playsinline preload="none" poster="img/walter/6.jpeg"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><img src="img/walter/7.jpeg" alt="Corte Walter 7"></li>
+            <li class="carousel-slide"><video src="img/walter/15.mp4" loop muted playsinline preload="none" poster="img/walter/7.jpeg"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><img src="img/walter/8.jpeg" alt="Corte Walter 8"></li>
+            <li class="carousel-slide"><video src="img/walter/16.mp4" loop muted playsinline preload="none" poster="img/walter/8.jpeg"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+        </ul>
+    </div>
+    <button class="carousel-btn next"><i class="fas fa-chevron-right"></i></button>
+</div>
+
+<div id="galeria-nacho" class="carousel-container galeria-barbero galeria-oculta">
+    <button class="carousel-btn prev"><i class="fas fa-chevron-left"></i></button>
+    <div class="carousel-track-container">
+        <ul class="carousel-track">
+            <li class="carousel-slide"><video src="img/nacho/1.mp4" loop muted playsinline preload="none"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><video src="img/nacho/2.mp4" loop muted playsinline preload="none"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><video src="img/nacho/3.mp4" loop muted playsinline preload="none"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><video src="img/nacho/4.mp4" loop muted playsinline preload="none"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><video src="img/nacho/5.mp4" loop muted playsinline preload="none"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><video src="img/nacho/6.mp4" loop muted playsinline preload="none"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+        </ul>
+    </div>
+    <button class="carousel-btn next"><i class="fas fa-chevron-right"></i></button>
+</div>
+
+<div id="galeria-valen" class="carousel-container galeria-barbero galeria-oculta">
+    <button class="carousel-btn prev"><i class="fas fa-chevron-left"></i></button>
+    <div class="carousel-track-container">
+        <ul class="carousel-track">
+            <li class="carousel-slide"><video src="img/valen/1.mp4" loop muted playsinline preload="none"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+            <li class="carousel-slide"><img src="img/valen/2.jpeg" alt="Corte Valen 2"></li>
+            <li class="carousel-slide"><video src="img/valen/3.mp4" loop muted playsinline preload="none"></video><div class="play-overlay"><i class="fas fa-play"></i></div></li>
+        </ul>
+    </div>
+    <button class="carousel-btn next"><i class="fas fa-chevron-right"></i></button>
+</div>
 
         </div>
 </section>
