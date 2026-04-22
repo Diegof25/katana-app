@@ -400,20 +400,46 @@
 
 async function verificarSesion() {
     try {
-        const res = await fetch('/api/admin/turnos');
+        // 1. Le damos un mini respiro al navegador para procesar la cookie del login
+        await new Promise(r => setTimeout(r, 150));
+
+        // 2. Agregamos credentials: 'include' para obligar el envío de la cookie
+        const res = await fetch('/api/admin/turnos', { 
+            credentials: 'include' 
+        });
+
         if (res.status === 401) {
+            console.warn("No autorizado: Redirigiendo al login...");
             window.location.href = 'login.html';
             return;
         }
-        // Si llegamos acá, el barbero está logueado
+
+        // 3. Si llegamos acá, la sesión es válida. 
+        // Primero inicializamos el calendario y luego cargamos los datos.
+        inicializarCalendario(); 
         cargarAgenda();
         cargarBloqueos();
-        cargarConfiguracion(); // Movela acá adentro también
+        cargarConfiguracion();
+
     } catch (error) { 
+        console.error("Error en la verificación de sesión:", error);
         window.location.href = 'login.html';
     }
 }
 
+// Extraé la lógica del flatpickr a una función aparte para que sea más limpio
+function inicializarCalendario() {
+    if (document.getElementById('filtro-fecha')) {
+        flatpickr("#filtro-fecha", {
+            locale: "es",
+            dateFormat: "d/m/Y",
+            defaultDate: "today",
+            onChange: function() {
+                cargarAgenda();
+            }
+        });
+    }
+}
 async function cargarAgenda() {
     try {
         const res = await fetch('/api/admin/turnos');
