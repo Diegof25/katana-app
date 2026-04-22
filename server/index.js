@@ -98,19 +98,36 @@ app.post('/api/admin/config', authRequired, async (req, res) => {
     }
 });
 // Ruta para obtener configuración (Pública para que cargue el Admin y el Index)
+// ---------------------------------------------------------
+// RUTA PARA OBTENER CONFIGURACIÓN (Corregida para múltiples barberos)
+// ---------------------------------------------------------
 app.get('/api/config', async (req, res) => {
-    const { barbero_id } = req.query; // <--- Importante: lo saca de la URL (?barbero_id=X)
+    // Obtenemos el ID de la URL. Ej: /api/config?barbero_id=1
+    const { barbero_id } = req.query; 
+
+    // Si no mandan ID, evitamos que la base de datos explote
+    if (!barbero_id) {
+        return res.status(400).json({ error: "Falta el barbero_id" });
+    }
+
     try {
         const result = await pool.query(
             'SELECT * FROM configuracion WHERE barbero_id = $1', 
             [barbero_id]
         );
-        res.json(result.rows[0] || {}); // Si no hay nada, manda un objeto vacío
+        
+        if (result.rows && result.rows.length > 0) {
+            // Enviamos la configuración encontrada (la que tiene id 11 o 12 en tu tabla)
+            res.json(result.rows[0]);
+        } else {
+            // Si el barbero no tiene horarios, mandamos un objeto vacío
+            res.json({}); 
+        }
     } catch (err) {
-        res.status(500).json({ error: "Error al obtener config" });
+        console.error("Error en /api/config:", err);
+        res.status(500).json({ error: "Error al obtener la configuración de la base de datos" });
     }
 });
-
 // --- 4. RUTAS DE LA API ---
 const turnosRoutes = require('./routes/turnos');
 
