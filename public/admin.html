@@ -571,7 +571,11 @@ async function cargarConfiguracion() {
         console.log("Datos recibidos de la DB:", data);
 
         if (data && res.ok) {
-            // 1. Mapeo de campos con soporte para 'ñ' o sin 'ñ' y recorte de segundos (.slice)
+            // 1. LIMPIEZA INICIAL: Desmarcamos todos los días
+            // Esto evita que queden marcados días por defecto (como el Lunes)
+            document.querySelectorAll('input[name="dias"]').forEach(cb => cb.checked = false);
+
+            // 2. MAPEO DE HORARIOS: Soporte para 'ñ' y recorte de segundos (09:00:00 -> 09:00)
             const mAp = data.mañana_apertura || data.manana_apertura;
             const mCi = data.mañana_cierre || data.manana_cierre;
             const tAp = data.tarde_apertura || data.tarde_apertura;
@@ -582,22 +586,24 @@ async function cargarConfiguracion() {
             if (tAp) document.getElementById('t_apertura').value = tAp.slice(0, 5);
             if (tCi) document.getElementById('t_cierre').value = tCi.slice(0, 5);
 
-            // 2. Intervalo (aseguramos que sea string para el select)
+            // 3. INTERVALO: Aseguramos que coincida con el valor del <select>
             if (data.intervalo) {
                 document.getElementById('intervalo').value = data.intervalo.toString();
             }
 
-            // 3. Días laborales (limpieza profunda de espacios y comas)
+            // 4. DÍAS LABORALES: Marcamos solo los que vienen de la DB
             if (data.dias_laborales) {
-                const dias = data.dias_laborales.toString().split(',').map(d => d.trim());
+                // Convertimos "2,3,4" a un array ["2", "3", "4"]
+                const diasGuardados = data.dias_laborales.toString().split(',').map(d => d.trim());
                 
                 document.querySelectorAll('input[name="dias"]').forEach(cb => {
-                    cb.checked = dias.includes(cb.value.toString());
+                    // Marcamos true solo si el valor del checkbox está en la lista de la DB
+                    cb.checked = diasGuardados.includes(cb.value.toString());
                 });
             }
         }
     } catch (error) {
-        console.error("Error al cargar la configuración:", error);
+        console.error("Error crítico al cargar configuración:", error);
     }
 }
 
