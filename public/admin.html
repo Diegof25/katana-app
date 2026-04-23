@@ -576,10 +576,13 @@ async function cargarConfiguracion() {
             if (data.tarde_cierre) document.getElementById('t_cierre').value = data.tarde_cierre.slice(0, 5);
             if (data.intervalo) document.getElementById('intervalo').value = data.intervalo;
 
-            if (data.dias_laborales) {
-                const dias = data.dias_laborales.split(',');
+                if (data.dias_laborales) {
+                // Convertimos lo que viene de la DB ("2,3,4") en un array de strings ["2", "3", "4"]
+                const dias = data.dias_laborales.toString().split(',').map(d => d.trim());
+                
                 document.querySelectorAll('input[name="dias"]').forEach(cb => {
-                    cb.checked = dias.includes(cb.value);
+                    // Marcamos si el valor del checkbox existe en el array de la DB
+                    cb.checked = dias.includes(cb.value.toString());
                 });
             }
         }
