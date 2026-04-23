@@ -11,15 +11,15 @@
     <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
     <style>
         :root { 
-            --accent: #ffb400; /**/
+            --accent: #ffb400;
             --accent-dark: #cc9000;
-            --bg: #0a0a0a; /* Fondo casi negro */
-            --card: #111111; /* Tarjetas gris muy oscuro */
-            --border: #252525; /* Bordes sutiles */
+            --bg: #0a0a0a; 
+            --card: #111111; 
+            --border: #252525; 
             --text-main: #e0e0e0;
             --text-muted: #707070;
             --font-heading: 'Oswald', sans-serif;
-            --font-body: 'Roboto Mono', monospace; /* Fuente mono para toque técnico */
+            --font-body: 'Roboto Mono', monospace;
         }
 
         /* --- RESET Y BÁSICOS --- */
@@ -42,7 +42,7 @@
             flex-grow: 1; 
         }
 
-        /* --- HEADER PREMIUM (Adaptable) --- */
+        /* --- HEADER PREMIUM  --- */
         .header-admin { 
             display: flex; 
             justify-content: space-between; 
@@ -67,7 +67,7 @@
 
         .header-actions { display: flex; align-items: center; gap: 15px; }
         .stats-badge { 
-            background: rgba(255, 180, 0, 0.15); /* Color acorde al accent */
+            background: rgba(255, 180, 0, 0.15); 
             color: var(--accent);
             padding: 6px 15px; 
             border-radius: 4px; 
@@ -90,12 +90,12 @@
             .header-actions { width: 100%; justify-content: space-between; }
         }
 
-        /* --- GRID PRINCIPAL (Adaptable) --- */
+        /* --- GRID PRINCIPAL  --- */
         .admin-grid { display: grid; grid-template-columns: 1fr 360px; gap: 25px; align-items: start; }
         
         @media (max-width: 992px) { .admin-grid { grid-template-columns: 1fr; } }
 
-        /* --- TARJETAS PREMIUM (Cards) --- */
+        /* --- TARJETAS PREMIUM  --- */
         .config-card { 
             background: var(--card); 
             padding: 25px; 
@@ -396,7 +396,7 @@
             // 2. IMPORTANTE: Definir las opciones aquí mismo para no fallar
             const opciones = { 
                 method: 'GET',
-                credentials: 'include' // <--- ESTO ES LO QUE TE DA EL ACCESO
+                credentials: 'include'
             };
 
             const res = await fetch('/api/admin/turnos', opciones);
@@ -429,7 +429,7 @@
                     cargarAgenda();
                 },
                 onReady: function() {
-                    cargarAgenda(); // Carga la lista apenas está listo
+                    cargarAgenda(); 
                 }
             });
         }
@@ -511,7 +511,7 @@
             dias_laborales: dias.join(',')
         };
 
-        const res = await fetch('/api/admin/config-personal', { // Agregué "-personal"
+        const res = await fetch('/api/admin/config-personal', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(config),
@@ -597,7 +597,6 @@ async function cargarConfiguracion() {
                 const diasGuardados = data.dias_laborales.toString().split(',').map(d => d.trim());
                 
                 document.querySelectorAll('input[name="dias"]').forEach(cb => {
-                    // Marcamos true solo si el valor del checkbox está en la lista de la DB
                     cb.checked = diasGuardados.includes(cb.value.toString());
                 });
             }
@@ -610,7 +609,6 @@ async function cargarConfiguracion() {
 async function cerrarSesion() {
     if (!confirm("¿Cerrar sesión de administrador?")) return;
     await fetch('/api/logout', { method: 'POST', ...fetchOptions });
-    // Cambiamos 'login.html' por '/' para volver a la página principal
     window.location.href = '/'; 
 }
 </script>

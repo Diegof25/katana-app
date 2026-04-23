@@ -40,7 +40,6 @@ async function intentarLogin() {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ username, password }),
-            // ESTA LÍNEA ES LA CLAVE:
             credentials: 'include' 
         });
 

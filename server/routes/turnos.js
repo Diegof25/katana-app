@@ -120,7 +120,7 @@ router.get('/horarios-disponibles', async (req, res) => {
 });
 // --- CLIENTE: RESERVAR ---
 router.post('/reservar', async (req, res) => {
-    const { nombre, telefono, servicio_id, fecha, barbero_id } = req.body; // <--- Recibimos barbero_id
+    const { nombre, telefono, servicio_id, fecha, barbero_id } = req.body; 
     try {
         await pool.query(
             `INSERT INTO turnos (cliente_nombre, cliente_telefono, servicio_id, barbero_id, fecha_hora) 
@@ -133,7 +133,6 @@ router.post('/reservar', async (req, res) => {
     }
 });
 
-// --- ADMIN: ACTUALIZAR CONFIGURACIÓN (CON DOBLE TURNO) ---
 // --- ADMIN: CONFIGURACIÓN PERSONALIZADA ---
 
 // 1. Ruta para GUARDAR (POST)

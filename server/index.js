@@ -1,8 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const session = require('express-session'); // Recordá: npm install express-session
-const pool = require('./db'); // <--- CORRECCIÓN: Se agregó la conexión a la base de datos
+const session = require('express-session');
+const pool = require('./db'); 
 require('dotenv').config();
 
 const app = express();
@@ -10,10 +10,10 @@ const app = express();
 // Configuración básica
 app.use(express.json());
 
-// 1. Configuración de CORS para permitir credenciales (Cookies)
+// 1. Configuración de CORS para permitir credenciales 
 app.use(cors({
-    origin: true, // Permite que el origen del frontend conecte
-    credentials: true // Crucial: permite que las cookies viajen
+    origin: true, 
+    credentials: true 
 }));
 
 
@@ -24,7 +24,7 @@ app.use(session({
     saveUninitialized: false, 
     cookie: { 
         maxAge: 1000 * 60 * 60 * 24,
-        secure: false, // Ponelo en false mientras estés en desarrollo (localhost)
+        secure: false, 
         sameSite: 'lax' 
     }
 }));
@@ -32,7 +32,7 @@ app.use(session({
 // 2. MIDDLEWARE DE SEGURIDAD (El "Portero")
 const authRequired = (req, res, next) => {
     if (req.session.admin) {
-        return next(); // Si tiene la sesión activa, pasa
+        return next(); 
     } else {
         return res.status(401).json({ error: "No autorizado. Por favor, iniciá sesión." });
     }
@@ -96,7 +96,7 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ error: "Error en la base de datos" });
     }
 });
-// Ruta para obtener configuración (Pública para que cargue el Admin y el Index)
+
 // ---------------------------------------------------------
 // RUTA PARA OBTENER CONFIGURACIÓN (Corregida para múltiples barberos)
 // ---------------------------------------------------------
@@ -130,13 +130,6 @@ app.get('/api/config', async (req, res) => {
 // --- 4. RUTAS DE LA API ---
 const turnosRoutes = require('./routes/turnos');
 
-/**
- * IMPORTANTE: 
- * Al usar app.use('/api', turnosRoutes), las rutas dentro de turnos.js 
- * que ya dicen '/admin/...' quedarán como '/api/admin/...'.
- * * La protección 'authRequired' la aplicamos directamente aquí 
- * mediante una lógica de validación o dentro del mismo turnos.js.
- */
 
 // Aplicamos el middleware de seguridad solo a las rutas que contienen "admin"
 app.use('/api', (req, res, next) => {
@@ -153,7 +146,7 @@ app.use('/api', (req, res, next) => {
 // Ruta para guardar bloqueos
 app.post('/api/admin/bloqueos', authRequired, async (req, res) => {
     const { fecha, tipo, inicio, fin } = req.body;
-    const barberoId = req.session.barberoId; // <--- Obtenemos quién está bloqueando
+    const barberoId = req.session.barberoId; // 
     try {
         const hora_inicio = (tipo === 'parcial') ? inicio : null;
         const hora_fin = (tipo === 'parcial') ? fin : null;
@@ -189,9 +182,9 @@ app.get('/api/admin/config-personal', authRequired, async (req, res) => {
     }
 });
 
-// Ruta para obtener la lista de bloqueos (Esto hará que aparezcan en el panel)
+// Ruta para obtener la lista de bloqueos 
 app.get('/api/admin/bloqueos', authRequired, async (req, res) => {
-    const barberoId = req.session.barberoId; // Filtramos por el dueño de la sesión
+    const barberoId = req.session.barberoId; 
     try {
         const result = await pool.query(
             "SELECT id, TO_CHAR(fecha, 'YYYY-MM-DD') as fecha, tipo, hora_inicio as inicio, hora_fin as fin FROM bloqueos WHERE barbero_id = $1 ORDER BY fecha ASC",
@@ -203,7 +196,7 @@ app.get('/api/admin/bloqueos', authRequired, async (req, res) => {
     }
 });
 
-// Ruta para eliminar bloqueos (Arrepentirse)
+// Ruta para eliminar bloqueos 
 app.delete('/api/admin/bloqueos/:id', authRequired, async (req, res) => {
     const { id } = req.params;
     try {
@@ -218,7 +211,7 @@ app.delete('/api/admin/bloqueos/:id', authRequired, async (req, res) => {
 app.post('/api/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) return res.status(500).json({ error: "No se pudo cerrar sesión" });
-        res.clearCookie('connect.sid'); // Limpia la cookie del navegador
+        res.clearCookie('connect.sid'); 
         res.json({ success: true });
     });
 });

@@ -2,7 +2,7 @@ let servicioSeleccionado = null;
 let barberoSeleccionado = null;
 let calendario = null;
 
-// 1. Cargar Barberos (Nueva función)
+// 1. Cargar Barberos
 async function cargarBarberos() {
     try {
         const res = await fetch('/api/barberos');
@@ -86,7 +86,7 @@ const hoy = new Date();
 const limiteDosSemanas = new Date(hoy);
 limiteDosSemanas.setDate(hoy.getDate() + 14);
 
-calendario = flatpickr("#fecha", { // <--- ASIGNAMOS A LA VARIABLE
+calendario = flatpickr("#fecha", { 
     locale: "es",
     minDate: "today",
     maxDate: limiteDosSemanas,
@@ -140,7 +140,7 @@ document.getElementById('btn-confirmar').onclick = async () => {
     const hora = document.getElementById('select-hora').value;
     
     const selectServicio = document.getElementById('select-servicio');
-    const selectBarbero = document.getElementById('select-barbero'); // <--- El nuevo selector
+    const selectBarbero = document.getElementById('select-barbero'); 
     
     // Validaciones de selección
     if (!selectBarbero || !selectBarbero.value) return alert("Por favor, seleccioná un barbero.");
@@ -153,7 +153,7 @@ document.getElementById('btn-confirmar').onclick = async () => {
     // Datos del barbero seleccionado
     const barberoId = selectBarbero.value;
     const nombreBarbero = selectBarbero.options[selectBarbero.selectedIndex].text;
-    const nroBarbero = selectBarbero.options[selectBarbero.selectedIndex].dataset.whatsapp; // El nro viene de la DB
+    const nroBarbero = selectBarbero.options[selectBarbero.selectedIndex].dataset.whatsapp; 
 
     const fechaHoraFull = `${fecha} ${hora}`;
 
@@ -162,7 +162,7 @@ document.getElementById('btn-confirmar').onclick = async () => {
         telefono, 
         fecha: fechaHoraFull, 
         servicio_id: servicioId,
-        barbero_id: barberoId // <--- Enviamos el ID a la DB
+        barbero_id: barberoId 
     };
 
     try {
@@ -209,10 +209,20 @@ document.getElementById('btn-confirmar').onclick = async () => {
 document.addEventListener('DOMContentLoaded', () => {
     cargarServicios();
     cargarBarberos();
+    
     const menuBtn = document.querySelector('.menu-toggle');
-    if(menuBtn) {
+    const navLinks = document.querySelector('.nav-links');
+
+    if(menuBtn && navLinks) {
         menuBtn.addEventListener('click', () => {
-            document.querySelector('.nav-links').classList.toggle('active');
+            navLinks.classList.toggle('active');
+        });
+
+        // Cerrar el menú al tocar cualquier opción 
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+            });
         });
     }
 });
@@ -284,19 +294,15 @@ function mostrarGaleria(nombreBarbero) {
 
     // Actualizar el estado visual de los botones
     document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
-    
-    // El 'event' permite detectar qué botón disparó la función
     if (window.event && window.event.currentTarget) {
         window.event.currentTarget.classList.add('active');
     }
-    
-    // Notificamos al navegador que el contenido cambió para evitar errores de scroll
     window.dispatchEvent(new Event('resize'));
 }
 
-// --- 2. LÓGICA UNIVERSAL PARA LAS FLECHAS (GIRAR FOTOS) ---
+// --- 2. LÓGICA UNIVERSAL PARA LAS FLECHAS  ---
 document.addEventListener('click', (e) => {
-    // Detectar si el clic fue en una flecha (prev o next)
+    // Detectar si el clic fue en una flecha
     const btn = e.target.closest('.carousel-btn');
     if (!btn) return;
 
@@ -308,20 +314,20 @@ document.addEventListener('click', (e) => {
     if (slides.length === 0) return;
 
     // Calcular el ancho de una imagen para saber cuánto desplazar
-    const slideWidth = slides[0].getBoundingClientRect().width + 20; // Ancho + gap (20px)
+    const slideWidth = slides[0].getBoundingClientRect().width + 20;
     
     // Obtener la posición actual del transform
     let currentTransform = 0;
     const style = window.getComputedStyle(track);
     const matrix = new WebKitCSSMatrix(style.transform);
-    currentTransform = matrix.m41; // Extrae el valor de X
+    currentTransform = matrix.m41;
 
     // Lógica de movimiento
     if (btn.classList.contains('next')) {
         // Límite máximo de scroll hacia la izquierda
         const maxScroll = -(track.scrollWidth - container.offsetWidth);
         
-        if (currentTransform > maxScroll + 10) { // +10 de margen de error
+        if (currentTransform > maxScroll + 10) {
             track.style.transform = `translateX(${currentTransform - slideWidth}px)`;
         } else {
             // Si llega al final, vuelve al inicio
@@ -345,7 +351,7 @@ document.querySelectorAll('.carousel-slide').forEach(item => {
                 document.querySelectorAll('video').forEach(v => v.pause());
                 
                 video.play();
-                this.classList.add('playing'); // Para esconder el icono de play
+                this.classList.add('playing');
             } else {
                 video.pause();
                 this.classList.remove('playing');
