@@ -73,7 +73,7 @@ app.post('/api/login', async (req, res) => {
 // ---------------------------------------------------------
 // RUTA PARA GUARDAR CONFIGURACIÓN (Actualizada para Horario Cortado y Días)
 // ---------------------------------------------------------
-app.post('/api/admin/config', authRequired, async (req, res) => {
+    app.post('/api/admin/config-personal', authRequired, async (req, res) => {
     const { m_apertura, m_cierre, t_apertura, t_cierre, intervalo, dias_laborales } = req.body;
     const barberoId = req.session.barberoId;
 

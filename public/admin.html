@@ -511,7 +511,7 @@
             dias_laborales: dias.join(',')
         };
 
-        const res = await fetch('/api/admin/config', {
+        const res = await fetch('/api/admin/config-personal', { // Agregué "-personal"
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(config),
