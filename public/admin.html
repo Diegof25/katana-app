@@ -607,11 +607,12 @@ async function cargarConfiguracion() {
     }
 }
 
-    async function cerrarSesion() {
-        if (!confirm("¿Cerrar sesión de administrador?")) return;
-        await fetch('/api/logout', { method: 'POST', ...fetchOptions });
-        window.location.href = 'login.html';
-    }
+async function cerrarSesion() {
+    if (!confirm("¿Cerrar sesión de administrador?")) return;
+    await fetch('/api/logout', { method: 'POST', ...fetchOptions });
+    // Cambiamos 'login.html' por '/' para volver a la página principal
+    window.location.href = '/'; 
+}
 </script>
 </body>
 </html>

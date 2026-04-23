@@ -17,11 +17,16 @@
         </div>
         <div class="input-box">
             <label>Contraseña</label>
-            <input type="password" id="pass" placeholder="••••••••">
+            <input type="password" id="pass" placeholder="••••••••" onkeyup="if(event.key === 'Enter') intentarLogin()">
         </div>
         <button onclick="intentarLogin()" class="btn-primary btn-block">ENTRAR</button>
         <p id="error" style="color: #ff4444; display: none; margin-top: 10px; font-size: 0.8rem; text-align: center;">Usuario o clave incorrectos</p>
     </div>
+   <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; text-align: center;">
+    <a href="/" style="text-decoration: none; color: #888; font-size: 0.85em; transition: 0.3s;">
+        ← Volver al inicio
+    </a>
+</div>
 </div>
 
 <script>
