@@ -565,23 +565,33 @@
 
 async function cargarConfiguracion() {
     try {
-        // Cambiamos a la ruta de admin que debería estar protegida y filtrar por sesión
         const res = await fetch('/api/admin/config-personal', fetchOptions); 
         const data = await res.json();
         
-        if (data && res.ok) {
-            if (data.mañana_apertura) document.getElementById('m_apertura').value = data.mañana_apertura.slice(0, 5);
-            if (data.mañana_cierre) document.getElementById('m_cierre').value = data.mañana_cierre.slice(0, 5);
-            if (data.tarde_apertura) document.getElementById('t_apertura').value = data.tarde_apertura.slice(0, 5);
-            if (data.tarde_cierre) document.getElementById('t_cierre').value = data.tarde_cierre.slice(0, 5);
-            if (data.intervalo) document.getElementById('intervalo').value = data.intervalo;
+        console.log("Datos recibidos de la DB:", data);
 
-                if (data.dias_laborales) {
-                // Convertimos lo que viene de la DB ("2,3,4") en un array de strings ["2", "3", "4"]
+        if (data && res.ok) {
+            // 1. Mapeo de campos con soporte para 'ñ' o sin 'ñ' y recorte de segundos (.slice)
+            const mAp = data.mañana_apertura || data.manana_apertura;
+            const mCi = data.mañana_cierre || data.manana_cierre;
+            const tAp = data.tarde_apertura || data.tarde_apertura;
+            const tCi = data.tarde_cierre || data.tarde_cierre;
+
+            if (mAp) document.getElementById('m_apertura').value = mAp.slice(0, 5);
+            if (mCi) document.getElementById('m_cierre').value = mCi.slice(0, 5);
+            if (tAp) document.getElementById('t_apertura').value = tAp.slice(0, 5);
+            if (tCi) document.getElementById('t_cierre').value = tCi.slice(0, 5);
+
+            // 2. Intervalo (aseguramos que sea string para el select)
+            if (data.intervalo) {
+                document.getElementById('intervalo').value = data.intervalo.toString();
+            }
+
+            // 3. Días laborales (limpieza profunda de espacios y comas)
+            if (data.dias_laborales) {
                 const dias = data.dias_laborales.toString().split(',').map(d => d.trim());
                 
                 document.querySelectorAll('input[name="dias"]').forEach(cb => {
-                    // Marcamos si el valor del checkbox existe en el array de la DB
                     cb.checked = dias.includes(cb.value.toString());
                 });
             }
