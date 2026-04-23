@@ -134,10 +134,13 @@ router.post('/reservar', async (req, res) => {
 });
 
 // --- ADMIN: ACTUALIZAR CONFIGURACIÓN (CON DOBLE TURNO) ---
-router.post('/admin/config', async (req, res) => {
+// --- ADMIN: CONFIGURACIÓN PERSONALIZADA ---
+
+// 1. Ruta para GUARDAR (POST)
+router.post('/admin/config-personal', async (req, res) => {
     const { m_apertura, m_cierre, t_apertura, t_cierre, intervalo, dias_laborales } = req.body;
     
-    // IMPORTANTE: Sacamos el ID del barbero de la sesión
+    // Sacamos el ID del barbero de la sesión
     const barberoId = req.session.barberoId;
 
     if (!barberoId) {
@@ -161,6 +164,24 @@ router.post('/admin/config', async (req, res) => {
     } catch (err) {
         console.error("Error al guardar config en turnos.js:", err);
         res.status(500).json({ error: "Error al guardar configuración" });
+    }
+});
+
+// 2. Ruta para LEER (GET) - Esto es lo que permite que los inputs se completen solos al entrar
+router.get('/admin/config-personal', async (req, res) => {
+    const barberoId = req.session.barberoId;
+
+    if (!barberoId) {
+        return res.status(401).json({ error: "No autorizado" });
+    }
+
+    try {
+        const result = await pool.query('SELECT * FROM configuracion WHERE barbero_id = $1', [barberoId]);
+        // Si no hay config, devolvemos un objeto vacío para que no rompa el front
+        res.json(result.rows[0] || {});
+    } catch (err) {
+        console.error("Error al obtener config:", err);
+        res.status(500).json({ error: "Error al traer la configuración" });
     }
 });
 
@@ -193,11 +214,63 @@ router.get('/admin/turnos', async (req, res) => {
 });
 
 router.delete('/admin/turnos/:id', async (req, res) => {
+    const barberoId = req.session.barberoId;
+
+    if (!barberoId) {
+        return res.status(401).json({ error: "No autorizado" });
+    }
+
     try {
-        await pool.query('DELETE FROM turnos WHERE id = $1', [req.params.id]);
+        // Agregamos barbero_id a la condición para que solo borre sus propios turnos
+        await pool.query(
+            'DELETE FROM turnos WHERE id = $1 AND barbero_id = $2', 
+            [req.params.id, barberoId]
+        );
         res.json({ success: true });
     } catch (err) {
+        console.error("Error al eliminar turno:", err);
         res.status(500).json({ error: "Error al eliminar" });
+    }
+});
+
+// --- ADMIN: BLOQUEOS (ANULACIONES) ---
+
+// Guardar un bloqueo
+router.post('/admin/bloqueos', async (req, res) => {
+    const { fecha, tipo, inicio, fin } = req.body;
+    const barberoId = req.session.barberoId;
+    try {
+        await pool.query(
+            'INSERT INTO bloqueos (barbero_id, fecha, tipo, hora_inicio, hora_fin) VALUES ($1, $2, $3, $4, $5)',
+            [barberoId, fecha, tipo, inicio, fin]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: "Error al bloquear" });
+    }
+});
+
+// Listar bloqueos del barbero
+router.get('/admin/bloqueos', async (req, res) => {
+    const barberoId = req.session.barberoId;
+    try {
+        const result = await pool.query(
+            "SELECT id, TO_CHAR(fecha, 'DD/MM/YYYY') as fecha, tipo, TO_CHAR(hora_inicio, 'HH24:MI') as inicio, TO_CHAR(hora_fin, 'HH24:MI') as fin FROM bloqueos WHERE barbero_id = $1 ORDER BY fecha DESC",
+            [barberoId]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: "Error al traer bloqueos" });
+    }
+});
+
+// Eliminar un bloqueo
+router.delete('/admin/bloqueos/:id', async (req, res) => {
+    try {
+        await pool.query('DELETE FROM bloqueos WHERE id = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: "Error al eliminar bloqueo" });
     }
 });
 

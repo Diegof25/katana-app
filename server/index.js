@@ -168,6 +168,27 @@ app.post('/api/admin/bloqueos', authRequired, async (req, res) => {
     }
 });
 
+// NUEVA RUTA: Obtener configuración del barbero logueado (Para el Admin)
+app.get('/api/admin/config-personal', authRequired, async (req, res) => {
+    const barberoId = req.session.barberoId; // Sacamos el ID de la sesión segura
+
+    try {
+        const result = await pool.query(
+            'SELECT * FROM configuracion WHERE barbero_id = $1', 
+            [barberoId]
+        );
+        
+        if (result.rows.length > 0) {
+            res.json(result.rows[0]);
+        } else {
+            res.json({}); // Si no hay nada, mandamos objeto vacío
+        }
+    } catch (err) {
+        console.error("Error al obtener config personal:", err);
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+});
+
 // Ruta para obtener la lista de bloqueos (Esto hará que aparezcan en el panel)
 app.get('/api/admin/bloqueos', authRequired, async (req, res) => {
     const barberoId = req.session.barberoId; // Filtramos por el dueño de la sesión
