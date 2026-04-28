@@ -428,6 +428,14 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         verificarSesion();
+
+        // Inicializar el selector de estadísticas mensuales con el mes actual si existe
+        const selectMes = document.getElementById('select-mes');
+        if(selectMes) {
+            const mesActual = new Date().getMonth() + 1;
+            selectMes.value = mesActual;
+            obtenerStatsMensuales();
+        }
     });
 
     async function verificarSesion() {
@@ -477,112 +485,117 @@
         }
     }
 
-async function cargarAgenda() {
-    try {
-        const res = await fetch('/api/admin/turnos', fetchOptions);
-        const turnos = await res.json();
-        const lista = document.getElementById('lista-turnos-admin');
-        const contador = document.getElementById('contador');
-        const tabla = document.getElementById('contenedor-tabla');
-        const filtroFecha = document.getElementById('filtro-fecha').value; 
+    async function cargarAgenda() {
+        try {
+            const res = await fetch('/api/admin/turnos', fetchOptions);
+            const turnos = await res.json();
+            const lista = document.getElementById('lista-turnos-admin');
+            const contador = document.getElementById('contador');
+            const tabla = document.getElementById('contenedor-tabla');
+            const filtroFecha = document.getElementById('filtro-fecha').value; 
 
-        // Variables para estadísticas
-        let sumaPagado = 0;
-        let sumaPendiente = 0;
+            // Variables para estadísticas
+            let sumaPagado = 0;
+            let sumaPendiente = 0;
 
-        lista.innerHTML = '';
+            lista.innerHTML = '';
 
-        const turnosFiltrados = turnos.filter(t => {
-            if (!t.fecha_hora) return false;
-            const soloFechaTurno = t.fecha_hora.split(' ')[0]; 
-            return soloFechaTurno === filtroFecha;
-        });
+            const turnosFiltrados = turnos.filter(t => {
+                if (!t.fecha_hora) return false;
+                const soloFechaTurno = t.fecha_hora.split(' ')[0]; 
+                return soloFechaTurno === filtroFecha;
+            });
 
-        contador.innerText = `${turnosFiltrados.length} TURNOS`;
+            contador.innerText = `${turnosFiltrados.length} TURNOS`;
 
-        if (turnosFiltrados.length === 0) {
-            document.getElementById('mensaje-vacio').style.display = 'block';
-            tabla.style.display = 'none';
-            // Resetear contadores si no hay turnos
-            if(document.getElementById('total-pagado')) document.getElementById('total-pagado').innerText = `$0`;
-            if(document.getElementById('total-pendiente')) document.getElementById('total-pendiente').innerText = `$0`;
-            return;
-        }
-
-        document.getElementById('mensaje-vacio').style.display = 'none';
-        tabla.style.display = 'table';
-
-        let htmlFinal = ''; // Usamos una variable para mayor eficiencia al renderizar
-
-        turnosFiltrados.forEach(t => {
-            const hora = t.fecha_hora.split(' ')[1];
-            const telLimpio = t.cliente_telefono.replace(/\D/g, '');
-            const linkWS = `https://wa.me/54${telLimpio}`;
-            const precio = parseFloat(t.precio) || 0;
-
-            // Lógica de estadísticas
-            if (t.pagado) {
-                sumaPagado += precio;
-            } else {
-                sumaPendiente += precio;
+            if (turnosFiltrados.length === 0) {
+                document.getElementById('mensaje-vacio').style.display = 'block';
+                tabla.style.display = 'none';
+                if(document.getElementById('total-pagado')) document.getElementById('total-pagado').innerText = `$0`;
+                if(document.getElementById('total-pendiente')) document.getElementById('total-pendiente').innerText = `$0`;
+                return;
             }
 
-            // Lógica del botón de cobro (usando tus estilos)
-            const celdaCobro = t.pagado 
-                ? `<span style="color: #2ecc71; font-weight: bold; font-size: 0.9rem;"><i class="fas fa-check-circle"></i> PAGADO</span>` 
-                : `<button onclick="marcarComoPagado(${t.id})" style="background:#f1c40f; color:#000; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.8rem;">
-                    <i class="fas fa-dollar-sign"></i> COBRAR
-                   </button>`;
-            
-            htmlFinal += `
-                <tr>
-                    <td>
-                        <strong>${t.cliente_nombre}</strong><br>
-                        <span style="font-size:0.8rem; color:#aaa;">${t.servicio_nombre || 'Servicio'}</span>
-                    </td>
-                    <td>
-                        <a href="${linkWS}" target="_blank" class="btn-table-ws" style="background:#25d366; color:white; padding:8px 15px; border-radius:4px; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; width: fit-content;">
-                            <i class="fab fa-whatsapp"></i> WhatsApp
-                        </a>
-                    </td>
-                    <td style="font-weight: bold; color: var(--accent); font-size: 1.1rem;">${hora} hs</td>
-                    <td>${celdaCobro}</td>
-                    <td class="action-cell">
-                        <button class="btn-table-delete" onclick="eliminarTurno(${t.id})" style="width:40px; height:40px;">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
+            document.getElementById('mensaje-vacio').style.display = 'none';
+            tabla.style.display = 'table';
 
-        lista.innerHTML = htmlFinal;
+            let htmlFinal = ''; 
 
-        // Actualizar los elementos de estadísticas en el HTML si existen
-        if(document.getElementById('total-pagado')) document.getElementById('total-pagado').innerText = `$${sumaPagado}`;
-        if(document.getElementById('total-pendiente')) document.getElementById('total-pendiente').innerText = `$${sumaPendiente}`;
+            turnosFiltrados.forEach(t => {
+                const hora = t.fecha_hora.split(' ')[1];
+                const telLimpio = t.cliente_telefono.replace(/\D/g, '');
+                const linkWS = `https://wa.me/54${telLimpio}`;
+                const precio = parseFloat(t.precio) || 0;
 
-    } catch (e) { 
-        console.error("Error cargando agenda:", e); 
-    }
-}
+                // Lógica de estadísticas
+                if (t.pagado) {
+                    sumaPagado += precio;
+                } else {
+                    sumaPendiente += precio;
+                }
 
-// Función auxiliar para procesar el pago
-async function marcarComoPagado(id) {
-    if(!confirm("¿Confirmar cobro de este turno?")) return;
-    try {
-        const res = await fetch(`/api/admin/turnos/pagar/${id}`, { 
-            method: 'PUT', 
-            ...fetchOptions 
-        });
-        if(res.ok) {
-            cargarAgenda();
-            await obtenerStatsMensuales(); // Recargamos para actualizar lista y totales
+                // Lógica del botón de cobro
+                const celdaCobro = t.pagado 
+                    ? `<span style="color: #2ecc71; font-weight: bold; font-size: 0.9rem;"><i class="fas fa-check-circle"></i> PAGADO</span>` 
+                    : `<button onclick="marcarComoPagado(${t.id})" style="background:#f1c40f; color:#000; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.8rem;">
+                        <i class="fas fa-dollar-sign"></i> COBRAR
+                       </button>`;
+                
+                htmlFinal += `
+                    <tr>
+                        <!-- Precio al inicio -->
+                        <td style="text-align: center;">
+                            <span style="display: block; font-size: 1.1rem; font-weight: 800; color: #2ecc71;">$${precio}</span>
+                        </td>
+                        
+                        <!-- Nombre Completo sin tipo de corte debajo -->
+                        <td>
+                            <strong style="font-size: 1rem; white-space: nowrap;">${t.cliente_nombre}</strong>
+                        </td>
+
+                        <td>
+                            <a href="${linkWS}" target="_blank" class="btn-table-ws" style="background:#25d366; color:white; padding:6px 10px; border-radius:4px; text-decoration:none; display:inline-flex; align-items:center; gap:5px; font-size:0.75rem;">
+                                <i class="fab fa-whatsapp"></i> WS
+                            </a>
+                        </td>
+
+                        <td style="font-weight: bold; color: var(--accent); font-size: 1rem;">${hora} hs</td>
+                        
+                        <td>${celdaCobro}</td>
+
+                        <td class="action-cell">
+                            <button class="btn-table-delete" onclick="eliminarTurno(${t.id})" style="width:35px; height:35px; background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.2); color: #ff4444;">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            lista.innerHTML = htmlFinal;
+
+            if(document.getElementById('total-pagado')) document.getElementById('total-pagado').innerText = `$${sumaPagado}`;
+            if(document.getElementById('total-pendiente')) document.getElementById('total-pendiente').innerText = `$${sumaPendiente}`;
+
+        } catch (e) { 
+            console.error("Error cargando agenda:", e); 
         }
-    } catch (e) {
-        console.error("Error al cobrar:", e);
     }
-}
+
+    async function marcarComoPagado(id) {
+        if(!confirm("¿Confirmar cobro de este turno?")) return;
+        try {
+            const res = await fetch(`/api/admin/turnos/pagar/${id}`, { 
+                method: 'PUT', 
+                ...fetchOptions 
+            });
+            if(res.ok) {
+                cargarAgenda();
+            }
+        } catch (e) {
+            console.error("Error al cobrar:", e);
+        }
+    }
 
     async function eliminarTurno(id) {
         if(!confirm("¿Borrar turno?")) return;
@@ -655,101 +668,76 @@ async function marcarComoPagado(id) {
         cargarBloqueos();
     }
 
-async function cargarConfiguracion() {
-    try {
-        const res = await fetch('/api/admin/config-personal', fetchOptions); 
-        const data = await res.json();
-        
-        console.log("Datos recibidos de la DB:", data);
+    async function cargarConfiguracion() {
+        try {
+            const res = await fetch('/api/admin/config-personal', fetchOptions); 
+            const data = await res.json();
+            
+            if (data && res.ok) {
+                document.querySelectorAll('input[name="dias"]').forEach(cb => cb.checked = false);
 
-        if (data && res.ok) {
-            // 1. LIMPIEZA INICIAL: Desmarcamos todos los días
-            // Esto evita que queden marcados días por defecto (como el Lunes)
-            document.querySelectorAll('input[name="dias"]').forEach(cb => cb.checked = false);
+                const mAp = data.mañana_apertura || data.manana_apertura;
+                const mCi = data.mañana_cierre || data.manana_cierre;
+                const tAp = data.tarde_apertura || data.tarde_apertura;
+                const tCi = data.tarde_cierre || data.tarde_cierre;
 
-            // 2. MAPEO DE HORARIOS: Soporte para 'ñ' y recorte de segundos (09:00:00 -> 09:00)
-            const mAp = data.mañana_apertura || data.manana_apertura;
-            const mCi = data.mañana_cierre || data.manana_cierre;
-            const tAp = data.tarde_apertura || data.tarde_apertura;
-            const tCi = data.tarde_cierre || data.tarde_cierre;
+                if (mAp) document.getElementById('m_apertura').value = mAp.slice(0, 5);
+                if (mCi) document.getElementById('m_cierre').value = mCi.slice(0, 5);
+                if (tAp) document.getElementById('t_apertura').value = tAp.slice(0, 5);
+                if (tCi) document.getElementById('t_cierre').value = tCi.slice(0, 5);
 
-            if (mAp) document.getElementById('m_apertura').value = mAp.slice(0, 5);
-            if (mCi) document.getElementById('m_cierre').value = mCi.slice(0, 5);
-            if (tAp) document.getElementById('t_apertura').value = tAp.slice(0, 5);
-            if (tCi) document.getElementById('t_cierre').value = tCi.slice(0, 5);
+                if (data.intervalo) {
+                    document.getElementById('intervalo').value = data.intervalo.toString();
+                }
 
-            // 3. INTERVALO: Aseguramos que coincida con el valor del <select>
-            if (data.intervalo) {
-                document.getElementById('intervalo').value = data.intervalo.toString();
+                if (data.dias_laborales) {
+                    const diasGuardados = data.dias_laborales.toString().split(',').map(d => d.trim());
+                    document.querySelectorAll('input[name="dias"]').forEach(cb => {
+                        cb.checked = diasGuardados.includes(cb.value.toString());
+                    });
+                }
             }
-
-            // 4. DÍAS LABORALES: Marcamos solo los que vienen de la DB
-            if (data.dias_laborales) {
-                // Convertimos "2,3,4" a un array ["2", "3", "4"]
-                const diasGuardados = data.dias_laborales.toString().split(',').map(d => d.trim());
-                
-                document.querySelectorAll('input[name="dias"]').forEach(cb => {
-                    cb.checked = diasGuardados.includes(cb.value.toString());
-                });
-            }
+        } catch (error) {
+            console.error("Error crítico al cargar configuración:", error);
         }
-    } catch (error) {
-        console.error("Error crítico al cargar configuración:", error);
-    }
-}
-async function obtenerStatsMensuales() {
-    const selectMes = document.getElementById('select-mes');
-    const montoDisplay = document.getElementById('monto-mensual');
-    const labelMes = document.getElementById('label-mes-seleccionado');
-    
-    if (!selectMes) return;
-
-    const mesSeleccionado = parseInt(selectMes.value);
-    const ahora = new Date();
-    let anioCalculado = ahora.getFullYear();
-
-    // Lógica: Si elegimos un mes que todavía no pasó en este año, 
-    // el sistema asume que queremos ver ese mes pero del año pasado.
-    if (mesSeleccionado > (ahora.getMonth() + 1)) {
-        anioCalculado = ahora.getFullYear() - 1;
     }
 
-    try {
-        const res = await fetch(`/api/admin/stats-mensual?mes=${mesSeleccionado}&anio=${anioCalculado}`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } // O como manejes tu sesión
-        });
-        const data = await res.json();
+    async function obtenerStatsMensuales() {
+        const selectMes = document.getElementById('select-mes');
+        const montoDisplay = document.getElementById('monto-mensual');
+        const labelMes = document.getElementById('label-mes-seleccionado');
         
-        // Actualiza el texto de ayuda (ej: TOTAL ABRIL 2026)
-        const nombreMes = selectMes.options[selectMes.selectedIndex].text;
-        labelMes.innerText = `TOTAL ${nombreMes} ${anioCalculado}`;
+        if (!selectMes) return;
 
-        // Formatea el dinero
-        const total = parseFloat(data.total) || 0;
-        montoDisplay.innerText = `$${total.toLocaleString('es-AR')}`;
+        const mesSeleccionado = parseInt(selectMes.value);
+        const ahora = new Date();
+        let anioCalculado = ahora.getFullYear();
 
-    } catch (e) {
-        console.error("Error en estadísticas:", e);
-        montoDisplay.innerText = "$---";
+        if (mesSeleccionado > (ahora.getMonth() + 1)) {
+            anioCalculado = ahora.getFullYear() - 1;
+        }
+
+        try {
+            const res = await fetch(`/api/admin/stats-mensual?mes=${mesSeleccionado}&anio=${anioCalculado}`, fetchOptions);
+            const data = await res.json();
+            
+            const nombreMes = selectMes.options[selectMes.selectedIndex].text;
+            labelMes.innerText = `TOTAL ${nombreMes} ${anioCalculado}`;
+
+            const total = parseFloat(data.total) || 0;
+            montoDisplay.innerText = `$${total.toLocaleString('es-AR')}`;
+
+        } catch (e) {
+            console.error("Error en estadísticas:", e);
+            montoDisplay.innerText = "$---";
+        }
     }
-}
 
-// Esto hace que al abrir el panel se cargue el mes actual automáticamente
-document.addEventListener('DOMContentLoaded', () => {
-    const selectMes = document.getElementById('select-mes');
-    if(selectMes) {
-        const mesActual = new Date().getMonth() + 1;
-        selectMes.value = mesActual;
-        obtenerStatsMensuales();
+    async function cerrarSesion() {
+        if (!confirm("¿Cerrar sesión de administrador?")) return;
+        await fetch('/api/logout', { method: 'POST', ...fetchOptions });
+        window.location.href = '/'; 
     }
-});
-
-
-async function cerrarSesion() {
-    if (!confirm("¿Cerrar sesión de administrador?")) return;
-    await fetch('/api/logout', { method: 'POST', ...fetchOptions });
-    window.location.href = '/'; 
-}
 </script>
 </body>
 </html>
