@@ -253,20 +253,35 @@
                     <h1>PANEL <span>KATANA</span></h1>
                     <p>Concordia, Entre Ríos</p>
                 </div>
-                    <div class="header-actions">
-                        <div style="display: flex; align-items: center; gap: 10px; background: #000; padding: 5px 12px; border-radius: 4px; border: 1px solid var(--accent);">
-                            <i class="fas fa-calendar-alt" style="color:var(--accent); font-size:0.8rem"></i>
-                            <input type="text" id="filtro-fecha" placeholder="Hoy" style="background:transparent; border:none; color:var(--accent); font-family:var(--font-body); width:100px; outline:none; cursor:pointer;">
-                        </div>
-                        
-                        <span id="contador" class="stats-badge">0 TURNOS</span>
-<a href="javascript:void(0)" onclick="cerrarSesion()" class="btn-exit">
-    <i class="fas fa-sign-out-alt"></i> SALIR
-</a>                    </div>
+                <div class="header-actions">
+                    <div style="display: flex; align-items: center; gap: 10px; background: #000; padding: 5px 12px; border-radius: 4px; border: 1px solid var(--accent);">
+                        <i class="fas fa-calendar-alt" style="color:var(--accent); font-size:0.8rem"></i>
+                        <input type="text" id="filtro-fecha" placeholder="Hoy" style="background:transparent; border:none; color:var(--accent); font-family:var(--font-body); width:100px; outline:none; cursor:pointer;">
+                    </div>
+                    
+                    <span id="contador" class="stats-badge">0 TURNOS</span>
+                    <a href="javascript:void(0)" onclick="cerrarSesion()" class="btn-exit">
+                        <i class="fas fa-sign-out-alt"></i> SALIR
+                    </a>
+                </div>
             </header>
 
             <div class="admin-grid">
+                <!-- SECCIÓN IZQUIERDA: Estadísticas y Tabla -->
                 <section class="table-section">
+                    
+                    <!-- Moví las estadísticas acá adentro para que no rompan el Grid principal -->
+                    <div class="stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div class="card-stat" style="background: #1a1a1a; padding: 15px; border-radius: 8px; border-left: 4px solid #2ecc71;">
+                            <span style="font-size: 0.8rem; color: #888;">RECAUDADO HOY</span>
+                            <h2 id="total-pagado" style="color: #2ecc71; margin: 5px 0;">$0</h2>
+                        </div>
+                        <div class="card-stat" style="background: #1a1a1a; padding: 15px; border-radius: 8px; border-left: 4px solid #f1c40f;">
+                            <span style="font-size: 0.8rem; color: #888;">POR COBRAR</span>
+                            <h2 id="total-pendiente" style="color: #f1c40f; margin: 5px 0;">$0</h2>
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
                         <table id="contenedor-tabla">
                             <thead>
@@ -274,11 +289,12 @@
                                     <th>Cliente</th>
                                     <th>Contacto</th>
                                     <th>Fecha y Hora</th>
+                                    <th>Estado</th> <!-- Agregué este encabezado para el botón de cobrar -->
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="lista-turnos-admin">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                     <div id="mensaje-vacio" class="no-datos" style="display:none;">
@@ -287,6 +303,7 @@
                     </div>
                 </section>
 
+                <!-- SECCIÓN DERECHA: Configuraciones -->
                 <aside>
                     <div class="config-card">
                         <h3><i class="fas fa-clock"></i> Horario de Atención</h3>
@@ -371,10 +388,35 @@
                         
                         <div class="bloqueos-list">
                             <p class="title">Bloqueos Activos</p>
-                            <div id="lista-bloqueos">
-                                </div>
+                            <div id="lista-bloqueos"></div>
                         </div>
                     </div>
+                    <!-- TARJETA DE ESTADÍSTICA MENSUAL -->
+<div class="config-card" style="margin-top: 25px; border-top: 4px solid var(--accent); background: #1a1a1a; padding: 20px; border-radius: 8px;">
+    <h3 style="margin-bottom: 15px;"><i class="fas fa-chart-line"></i> Mi Rendimiento</h3>
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+        <label style="font-size: 0.7rem; color: var(--accent);">SELECCIONAR MES</label>
+        <select id="select-mes" onchange="obtenerStatsMensuales()" style="width: 100%; background:#000; color:#fff; border:1px solid #333; padding:12px; border-radius:4px; cursor:pointer; font-family: inherit; outline: none;">
+            <option value="1">Enero</option>
+            <option value="2">Febrero</option>
+            <option value="3">Marzo</option>
+            <option value="4">Abril</option>
+            <option value="5">Mayo</option>
+            <option value="6">Junio</option>
+            <option value="7">Julio</option>
+            <option value="8">Agosto</option>
+            <option value="9">Septiembre</option>
+            <option value="10">Octubre</option>
+            <option value="11">Noviembre</option>
+            <option value="12">Diciembre</option>
+        </select>
+
+        <div style="text-align: center; padding: 20px; background: #000; border-radius: 6px; border: 1px solid #222; margin-top: 5px;">
+            <span id="label-mes-seleccionado" style="color: #888; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-bottom: 5px;">CARGANDO...</span>
+            <h2 id="monto-mensual" style="color: var(--accent); margin: 0; font-size: 2rem; font-weight: 800;">$0</h2>
+        </div>
+    </div>
+</div>
                 </aside>
             </div>
         </div>
@@ -435,62 +477,112 @@
         }
     }
 
-    async function cargarAgenda() {
-        try {
-            const res = await fetch('/api/admin/turnos', fetchOptions);
-            const turnos = await res.json();
-            const lista = document.getElementById('lista-turnos-admin');
-            const contador = document.getElementById('contador');
-            const tabla = document.getElementById('contenedor-tabla');
-            const filtroFecha = document.getElementById('filtro-fecha').value; 
+async function cargarAgenda() {
+    try {
+        const res = await fetch('/api/admin/turnos', fetchOptions);
+        const turnos = await res.json();
+        const lista = document.getElementById('lista-turnos-admin');
+        const contador = document.getElementById('contador');
+        const tabla = document.getElementById('contenedor-tabla');
+        const filtroFecha = document.getElementById('filtro-fecha').value; 
 
-            lista.innerHTML = '';
+        // Variables para estadísticas
+        let sumaPagado = 0;
+        let sumaPendiente = 0;
 
-            const turnosFiltrados = turnos.filter(t => {
-                if (!t.fecha_hora) return false;
-                // Ajuste para asegurar que el formato de fecha coincida al filtrar
-                const soloFechaTurno = t.fecha_hora.split(' ')[0]; 
-                return soloFechaTurno === filtroFecha;
-            });
+        lista.innerHTML = '';
 
-            contador.innerText = `${turnosFiltrados.length} TURNOS`;
+        const turnosFiltrados = turnos.filter(t => {
+            if (!t.fecha_hora) return false;
+            const soloFechaTurno = t.fecha_hora.split(' ')[0]; 
+            return soloFechaTurno === filtroFecha;
+        });
 
-            if (turnosFiltrados.length === 0) {
-                document.getElementById('mensaje-vacio').style.display = 'block';
-                tabla.style.display = 'none';
-                return;
+        contador.innerText = `${turnosFiltrados.length} TURNOS`;
+
+        if (turnosFiltrados.length === 0) {
+            document.getElementById('mensaje-vacio').style.display = 'block';
+            tabla.style.display = 'none';
+            // Resetear contadores si no hay turnos
+            if(document.getElementById('total-pagado')) document.getElementById('total-pagado').innerText = `$0`;
+            if(document.getElementById('total-pendiente')) document.getElementById('total-pendiente').innerText = `$0`;
+            return;
+        }
+
+        document.getElementById('mensaje-vacio').style.display = 'none';
+        tabla.style.display = 'table';
+
+        let htmlFinal = ''; // Usamos una variable para mayor eficiencia al renderizar
+
+        turnosFiltrados.forEach(t => {
+            const hora = t.fecha_hora.split(' ')[1];
+            const telLimpio = t.cliente_telefono.replace(/\D/g, '');
+            const linkWS = `https://wa.me/54${telLimpio}`;
+            const precio = parseFloat(t.precio) || 0;
+
+            // Lógica de estadísticas
+            if (t.pagado) {
+                sumaPagado += precio;
+            } else {
+                sumaPendiente += precio;
             }
 
-            document.getElementById('mensaje-vacio').style.display = 'none';
-            tabla.style.display = 'table';
+            // Lógica del botón de cobro (usando tus estilos)
+            const celdaCobro = t.pagado 
+                ? `<span style="color: #2ecc71; font-weight: bold; font-size: 0.9rem;"><i class="fas fa-check-circle"></i> PAGADO</span>` 
+                : `<button onclick="marcarComoPagado(${t.id})" style="background:#f1c40f; color:#000; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.8rem;">
+                    <i class="fas fa-dollar-sign"></i> COBRAR
+                   </button>`;
+            
+            htmlFinal += `
+                <tr>
+                    <td>
+                        <strong>${t.cliente_nombre}</strong><br>
+                        <span style="font-size:0.8rem; color:#aaa;">${t.servicio_nombre || 'Servicio'}</span>
+                    </td>
+                    <td>
+                        <a href="${linkWS}" target="_blank" class="btn-table-ws" style="background:#25d366; color:white; padding:8px 15px; border-radius:4px; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; width: fit-content;">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </a>
+                    </td>
+                    <td style="font-weight: bold; color: var(--accent); font-size: 1.1rem;">${hora} hs</td>
+                    <td>${celdaCobro}</td>
+                    <td class="action-cell">
+                        <button class="btn-table-delete" onclick="eliminarTurno(${t.id})" style="width:40px; height:40px;">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
 
-            turnosFiltrados.forEach(t => {
-                const hora = t.fecha_hora.split(' ')[1];
-                const telLimpio = t.cliente_telefono.replace(/\D/g, '');
-                const linkWS = `https://wa.me/54${telLimpio}`;
-                
-                lista.innerHTML += `
-                    <tr>
-                        <td><strong>${t.cliente_nombre}</strong><br><span class="status-pill">Activo</span></td>
-                        <td>
-                            <a href="${linkWS}" target="_blank" class="btn-table-ws" style="background:#25d366; color:white; padding:8px 15px; border-radius:4px; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; width: fit-content;">
-                                <i class="fab fa-whatsapp"></i> WhatsApp
-                            </a>
-                        </td>
-                        <td style="font-weight: bold; color: var(--accent); font-size: 1.1rem;">${hora} hs</td>
-                        <td class="action-cell">
-                            <button class="btn-table-delete" onclick="eliminarTurno(${t.id})" style="width:40px; height:40px;">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
+        lista.innerHTML = htmlFinal;
 
-        } catch (e) { 
-            console.error("Error cargando agenda:", e); 
-        }
+        // Actualizar los elementos de estadísticas en el HTML si existen
+        if(document.getElementById('total-pagado')) document.getElementById('total-pagado').innerText = `$${sumaPagado}`;
+        if(document.getElementById('total-pendiente')) document.getElementById('total-pendiente').innerText = `$${sumaPendiente}`;
+
+    } catch (e) { 
+        console.error("Error cargando agenda:", e); 
     }
+}
+
+// Función auxiliar para procesar el pago
+async function marcarComoPagado(id) {
+    if(!confirm("¿Confirmar cobro de este turno?")) return;
+    try {
+        const res = await fetch(`/api/admin/turnos/pagar/${id}`, { 
+            method: 'PUT', 
+            ...fetchOptions 
+        });
+        if(res.ok) {
+            cargarAgenda();
+            await obtenerStatsMensuales(); // Recargamos para actualizar lista y totales
+        }
+    } catch (e) {
+        console.error("Error al cobrar:", e);
+    }
+}
 
     async function eliminarTurno(id) {
         if(!confirm("¿Borrar turno?")) return;
@@ -605,6 +697,53 @@ async function cargarConfiguracion() {
         console.error("Error crítico al cargar configuración:", error);
     }
 }
+async function obtenerStatsMensuales() {
+    const selectMes = document.getElementById('select-mes');
+    const montoDisplay = document.getElementById('monto-mensual');
+    const labelMes = document.getElementById('label-mes-seleccionado');
+    
+    if (!selectMes) return;
+
+    const mesSeleccionado = parseInt(selectMes.value);
+    const ahora = new Date();
+    let anioCalculado = ahora.getFullYear();
+
+    // Lógica: Si elegimos un mes que todavía no pasó en este año, 
+    // el sistema asume que queremos ver ese mes pero del año pasado.
+    if (mesSeleccionado > (ahora.getMonth() + 1)) {
+        anioCalculado = ahora.getFullYear() - 1;
+    }
+
+    try {
+        const res = await fetch(`/api/admin/stats-mensual?mes=${mesSeleccionado}&anio=${anioCalculado}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } // O como manejes tu sesión
+        });
+        const data = await res.json();
+        
+        // Actualiza el texto de ayuda (ej: TOTAL ABRIL 2026)
+        const nombreMes = selectMes.options[selectMes.selectedIndex].text;
+        labelMes.innerText = `TOTAL ${nombreMes} ${anioCalculado}`;
+
+        // Formatea el dinero
+        const total = parseFloat(data.total) || 0;
+        montoDisplay.innerText = `$${total.toLocaleString('es-AR')}`;
+
+    } catch (e) {
+        console.error("Error en estadísticas:", e);
+        montoDisplay.innerText = "$---";
+    }
+}
+
+// Esto hace que al abrir el panel se cargue el mes actual automáticamente
+document.addEventListener('DOMContentLoaded', () => {
+    const selectMes = document.getElementById('select-mes');
+    if(selectMes) {
+        const mesActual = new Date().getMonth() + 1;
+        selectMes.value = mesActual;
+        obtenerStatsMensuales();
+    }
+});
+
 
 async function cerrarSesion() {
     if (!confirm("¿Cerrar sesión de administrador?")) return;

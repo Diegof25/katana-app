@@ -184,22 +184,22 @@ router.get('/admin/config-personal', async (req, res) => {
     }
 });
 
-// --- ADMIN: VER AGENDA ---
+// --- ADMIN: VER AGENDA (ACTUALIZADO) ---
 router.get('/admin/turnos', async (req, res) => {
     try {
         let query = `
             SELECT turnos.id, turnos.cliente_nombre, turnos.cliente_telefono,
-                   servicios.nombre as servicio_nombre, barberos.nombre as barbero_nombre,
+                   servicios.nombre as servicio_nombre, servicios.precio, -- Traemos el precio
+                   turnos.pagado, -- Traemos el estado de pago
                    TO_CHAR(turnos.fecha_hora AT TIME ZONE 'UTC' AT TIME ZONE 'America/Argentina/Buenos_Aires', 'DD/MM/YYYY HH24:MI') as fecha_hora
             FROM turnos 
             JOIN servicios ON turnos.servicio_id = servicios.id 
-            JOIN barberos ON turnos.barbero_id = barberos.id `;
+            WHERE 1=1 `; // Base para agregar filtros
 
         const params = [];
 
-        // SI EL USUARIO ES BARBERO: Filtramos solo sus turnos
         if (req.session.barberoId) {
-            query += ` WHERE turnos.barbero_id = $1 `;
+            query += ` AND turnos.barbero_id = $1 `;
             params.push(req.session.barberoId);
         }
 
@@ -209,6 +209,22 @@ router.get('/admin/turnos', async (req, res) => {
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: "Error en la agenda" });
+    }
+});
+
+// NUEVA RUTA: Para marcar como pagado
+router.put('/admin/turnos/pagar/:id', async (req, res) => {
+    const barberoId = req.session.barberoId;
+    if (!barberoId) return res.status(401).json({ error: "No autorizado" });
+
+    try {
+        await pool.query(
+            "UPDATE turnos SET pagado = TRUE, metodo_pago = 'efectivo' WHERE id = $1 AND barbero_id = $2",
+            [req.params.id, barberoId]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: "Error al cobrar" });
     }
 });
 
@@ -263,13 +279,57 @@ router.get('/admin/bloqueos', async (req, res) => {
     }
 });
 
-// Eliminar un bloqueo
+// Eliminar un bloqueo (Versión protegida)
 router.delete('/admin/bloqueos/:id', async (req, res) => {
+    // 1. Obtenemos el ID del barbero desde la sesión
+    const barberoId = req.session.barberoId;
+
+    // 2. Verificamos que esté logueado
+    if (!barberoId) {
+        return res.status(401).json({ error: "No autorizado" });
+    }
+
     try {
-        await pool.query('DELETE FROM bloqueos WHERE id = $1', [req.params.id]);
+        // 3. Agregamos el barbero_id a la condición del DELETE
+        const result = await pool.query(
+            'DELETE FROM bloqueos WHERE id = $1 AND barbero_id = $2', 
+            [req.params.id, barberoId]
+        );
+
+        // 4. (Opcional) Verificamos si realmente se borró algo
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "Bloqueo no encontrado o no te pertenece" });
+        }
+
         res.json({ success: true });
     } catch (err) {
+        console.error("Error al eliminar bloqueo:", err);
         res.status(500).json({ error: "Error al eliminar bloqueo" });
+    }
+});
+
+// RUTA PARA ESTADÍSTICA MENSUAL AUTOMÁTICA
+router.get('/admin/stats-mensual', async (req, res) => {
+    const barberoId = req.session.barberoId;
+    const { mes, anio } = req.query; 
+
+    if (!barberoId) return res.status(401).json({ error: "No autorizado" });
+
+    try {
+        const query = `
+            SELECT SUM(servicios.precio) as total_mensual
+            FROM turnos
+            JOIN servicios ON turnos.servicio_id = servicios.id
+            WHERE turnos.barbero_id = $1 
+              AND turnos.pagado = TRUE
+              AND EXTRACT(MONTH FROM turnos.fecha_hora) = $2
+              AND EXTRACT(YEAR FROM turnos.fecha_hora) = $3
+        `;
+        const result = await pool.query(query, [barberoId, mes, anio]);
+        res.json({ total: result.rows[0].total_mensual || 0 });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Error al calcular estadísticas" });
     }
 });
 
