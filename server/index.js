@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const session = require('express-session');
 const pool = require('./db'); 
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const app = express();
@@ -40,29 +41,40 @@ const authRequired = (req, res, next) => {
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body; 
     try {
+        // 1. Buscamos al usuario ÚNICAMENTE por su nombre de usuario
+        // Traemos también la columna 'password_hash' para poder compararla después
         const result = await pool.query(
-            'SELECT id, username, barbero_id FROM usuarios WHERE username = $1 AND password_hash = $2',
-            [username, password]
+            'SELECT id, username, password_hash, barbero_id FROM usuarios WHERE username = $1',
+            [username]
         );
 
         if (result.rows.length > 0) {
             const user = result.rows[0];
             
-            // Seteamos los datos
-            req.session.admin = true;
-            req.session.barberoId = user.barbero_id;
+            // 2. Comparamos la contraseña en texto plano con el hash seguro de la base de datos
+            const coinciden = await bcrypt.compare(password, user.password_hash);
 
-            // --- CRUCIAL: Forzamos el guardado manual ---
-            req.session.save((err) => {
-                if (err) {
-                    console.error("Error al guardar sesión:", err);
-                    return res.status(500).json({ error: "Error al iniciar sesión" });
-                }
-                // Recién cuando estamos SEGUROS de que se guardó, respondemos
-                res.json({ success: true, barberoId: user.barbero_id });
-            });
+            if (coinciden) {
+                // Seteamos los datos si la clave es correcta
+                req.session.admin = true;
+                req.session.barberoId = user.barbero_id;
+
+                // --- CRUCIAL: Forzamos el guardado manual ---
+                req.session.save((err) => {
+                    if (err) {
+                        console.error("Error al guardar sesión:", err);
+                        return res.status(500).json({ error: "Error al iniciar sesión" });
+                    }
+                    // Recién cuando estamos SEGUROS de que se guardó, respondemos
+                    res.json({ success: true, barberoId: user.barbero_id });
+                });
+            } else {
+                // Si la contraseña no coincide, devolvemos 401
+                res.status(401).json({ success: false, message: 'Usuario o clave incorrectos' });
+            }
             
         } else {
+            // Si el usuario no existe, devolvemos exactamente el mismo error por seguridad
             res.status(401).json({ success: false, message: 'Usuario o clave incorrectos' });
         }
     } catch (err) {
